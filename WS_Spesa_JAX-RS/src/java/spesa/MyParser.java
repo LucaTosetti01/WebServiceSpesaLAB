@@ -14,10 +14,58 @@ import org.xml.sax.SAXException;
 
 public class MyParser {
 
+    boolean controllo = false;
+    private Utente utentet;
+    private Richiesta richiestat;
     private List lista;
     
     public MyParser() {
         lista = new ArrayList();
+    }
+    
+    public Utente parseUtente(String filename) throws ParserConfigurationException, SAXException, IOException {
+
+        DocumentBuilderFactory factory;
+        DocumentBuilder builder;
+        Document document;
+        Element root, element;
+        NodeList nodelist;
+        Utente utente;
+
+        // creazione dell’albero DOM dal documento XML
+        factory = DocumentBuilderFactory.newInstance();
+        builder = factory.newDocumentBuilder();
+        document = builder.parse(filename);
+        root = document.getDocumentElement();
+        nodelist = root.getElementsByTagName("utente");
+        element = (Element) nodelist.item(0);
+        utente = getUtente(element);
+        utentet = utente;
+
+        return utentet;
+    }
+
+    public Richiesta parseRichiesta(String filename) throws ParserConfigurationException, SAXException, IOException {
+
+        DocumentBuilderFactory factory;
+        DocumentBuilder builder;
+        Document document;
+        Element root, element;
+        NodeList nodelist;
+        Richiesta richiesta;
+
+        // creazione dell’albero DOM dal documento XML
+        factory = DocumentBuilderFactory.newInstance();
+        builder = factory.newDocumentBuilder();
+        document = builder.parse(filename);
+        root = document.getDocumentElement();
+        nodelist = root.getElementsByTagName("richiesta");
+        element = (Element) nodelist.item(0);
+        element.getNextSibling();
+        richiesta = getRichiesta(element);
+        richiestat = richiesta;
+
+        return richiestat;
     }
 
     public Utente parseFileUtente(String filename) throws ParserConfigurationException, SAXException, IOException {

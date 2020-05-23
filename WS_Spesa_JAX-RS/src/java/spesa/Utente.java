@@ -18,6 +18,29 @@ public class Utente {
     private String regione;
     private String via;
     private String nCivico;
+    private String password;
+
+    public Utente(String idUtente, String username, String nome, String cognome, String codiceFiscale, String regione, String via, String nCivico, String password) {
+        this.idUtente = idUtente;
+        this.username = username;
+        this.nome = nome;
+        this.cognome = cognome;
+        this.codiceFiscale = codiceFiscale;
+        this.regione = regione;
+        this.via = via;
+        this.nCivico = nCivico;
+        this.password = password;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    
+    
 
     public Utente(String idUtente, String username, String nome, String cognome, String codiceFiscale, String regione, String via, String nCivico) {
         this.idUtente = idUtente;
