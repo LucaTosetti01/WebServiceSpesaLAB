@@ -1,8 +1,40 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+/**
+     * TOSETTI LUCA
+     * 
+     * http://localhost:8080/spesa/getRisposte
+     * http://localhost:8080/spesa/getProdotto
+     * http://localhost:8080/spesa/postProdotto
+     * http://localhost:8080/spesa/putProdotto
+     * http://localhost:8080/spesa/deleteProdotto
+     */
+
+/**
+     * SPANGARO FRANCESCO
+     * 
+     * http://localhost:8080/spesa/richiestaXML/{id}
+     * http://localhost:8080/spesa/richiestaJSON/{id}
+     * http://localhost:8080/spesa/utenteXML
+     * http://localhost:8080/spesa/utenteJSON
+     * http://localhost:8080/spesa/delLista?id={id}
+     */
+
+/**
+     * GALIMBERTI FRANCESCO
+     * 
+     * http://localhost:8080/spesa/
+     * http://localhost:8080/spesa/
+     * http://localhost:8080/spesa/
+     * http://localhost:8080/spesa/
+     * http://localhost:8080/spesa/
+     */
+
+/**
+     * ROVELLI ANDREA
+     * 
+     * http://localhost:8080/spesa/lista?rifRichiesta={id}
+     * http://localhost:8080/spesa/lista
+     * http://localhost:8080/spesa/updLista
+     */
 package spesa;
 
 import java.io.BufferedWriter;
@@ -383,17 +415,6 @@ public class Api extends Application{
     }
     
     
-    /**
-     * TOSETTI LUCA
-     * 
-     * http://localhost:8080/spesa/getRisposte
-     * http://localhost:8080/spesa/getProdotto
-     * http://localhost:8080/spesa/postProdotto
-     * http://localhost:8080/spesa/putProdotto
-     * http://localhost:8080/spesa/deleteProdotto
-     */
-    
-    
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Path("getRisposte")
@@ -663,6 +684,7 @@ public class Api extends Application{
     }
     
     /*
+    SPANGARO FRANCESCO
     visualizza i dati di una richiesta da id fornito nella path in formato xml come definito nella progettazione api
      */
     @GET
@@ -714,6 +736,7 @@ public class Api extends Application{
     }
 
     /*
+    SPANGARO FRANCESCO
     visualizza i dati di una richiesta da id fornito nella path in formato json come definito nella progettazione api
      */
     @GET
@@ -764,6 +787,7 @@ public class Api extends Application{
     }
 
     /*
+    SPANGARO FRANCESCO
     inserisce un utente nel database, dati forniti in formato xml
      */
     @POST
@@ -774,7 +798,7 @@ public class Api extends Application{
         try {
             String xsdFile = "\\xml\\utente.xsd";
             BufferedWriter writer;
-            writer = new BufferedWriter(new FileWriter("entry.xml"));
+            writer = new BufferedWriter(new FileWriter("utente.xml"));
             writer.write(content);
             writer.flush();
             writer.close();
@@ -816,6 +840,7 @@ public class Api extends Application{
     }
 
     /*
+    SPANGARO FRANCESCO
     inserisce un utente nel database, dati forniti in formato json
      */
     @POST
@@ -857,6 +882,7 @@ public class Api extends Application{
     }
 
     /*
+    SPANGARO FRANCESCO
     inserisce una richiesta nel database, dati forniti in formato xml
      */
     @POST
@@ -867,7 +893,7 @@ public class Api extends Application{
         try {
             String xsdFile = "\\xml\\richiesta.xsd";
             BufferedWriter writer;
-            writer = new BufferedWriter(new FileWriter("entry.xml"));
+            writer = new BufferedWriter(new FileWriter("richiesta.xml"));
             writer.write(content);
             writer.flush();
             writer.close();
@@ -909,6 +935,7 @@ public class Api extends Application{
     }
 
     /*
+    SPANGARO FRANCESCO
     inserisce una richiesta nel database, dati forniti in formato json
      */
     @POST
@@ -946,10 +973,11 @@ public class Api extends Application{
     }
 
     /*
+    SPANGARO FRANCESCO
     cancella una lista dal database, basandosi sull'id fornito nella api
      */
     @DELETE
-    @Path("lista")
+    @Path("delLista")
     public String deleteLista(@QueryParam("id") int id) {
         init();
 
