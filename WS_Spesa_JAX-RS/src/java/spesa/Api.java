@@ -1,53 +1,43 @@
 /**
-     * TOSETTI LUCA
-     * 
-     * @GET
-     * http://localhost:8080/spesa/risposte
-     * http://localhost:8080/spesa/prodotto?genere={genere}&nome={nome}...
-     * @POST
-     * http://localhost:8080/spesa/prodotto
-     * @PUT
-     * http://localhost:8080/spesa/prodotto/{idProdotto}
-     * @DELETE
-     * http://localhost:8080/spesa/prodotto/{idProdotto}
-     */
-
+ * TOSETTI LUCA
+ *
+ * @GET
+ * http://localhost:8080/spesa/risposte
+ * http://localhost:8080/spesa/prodotto?genere={genere}&nome={nome}...
+ * @POST http://localhost:8080/spesa/prodotto
+ * @PUT http://localhost:8080/spesa/prodotto/{idProdotto}
+ * @DELETE http://localhost:8080/spesa/prodotto/{idProdotto}
+ */
 /**
-     * SPANGARO FRANCESCO
-     * 
-     * @GET
-     * http://localhost:8080/spesa/richiestaXML/{id}
-     * http://localhost:8080/spesa/richiestaJSON/{id}
-     * @POST
-     * http://localhost:8080/spesa/utenteXML
-     * http://localhost:8080/spesa/utenteJSON
-     * http://localhost:8080/spesa/richiestaXML
-     * http://localhost:8080/spesa/richiestaJSON
-     * @DELETE
-     * http://localhost:8080/spesa/lista?id={id}
-     */
-
+ * SPANGARO FRANCESCO
+ *
+ * @GET
+ * http://localhost:8080/spesa/richiestaXML/{id}
+ * http://localhost:8080/spesa/richiestaJSON/{id}
+ * @POST http://localhost:8080/spesa/utenteXML
+ * http://localhost:8080/spesa/utenteJSON
+ * http://localhost:8080/spesa/richiestaXML
+ * http://localhost:8080/spesa/richiestaJSON
+ * @DELETE http://localhost:8080/spesa/lista?id={id}
+ */
 /**
-     * GALIMBERTI FRANCESCO
-     * 
-     * @GET
-     * http://localhost:8080/spesa/utenti
-     * @POST
-     * http://localhost:8080/spesa/risposta
-     * @PUT
-     * http://localhost:8080/spesa/utenti/{idUtente}
-     * @DELETE
-     * http://localhost:8080/spesa/richieste/{idRichiesta}
-     */
-
+ * GALIMBERTI FRANCESCO
+ *
+ * @GET
+ * http://localhost:8080/spesa/utenti
+ * http://localhost:8080/spesa/utenti?username={username}&nome={nome}...
+ * @POST http://localhost:8080/spesa/risposta
+ * @PUT http://localhost:8080/spesa/utenti/{idUtente}
+ * @DELETE http://localhost:8080/spesa/richieste/{idRichiesta}
+ */
 /**
-     * ROVELLI ANDREA
-     * 
-     * http://localhost:8080/spesa/lista?rifRichiesta={id}
-     * http://localhost:8080/spesa/lista
-     * @PUT
-     * http://localhost:8080/spesa/updLista
-     */
+ * ROVELLI ANDREA
+ *
+ * http://localhost:8080/spesa/lista?rifRichiesta={id}
+ * http://localhost:8080/spesa/lista
+ *
+ * @PUT http://localhost:8080/spesa/updLista
+ */
 package spesa;
 
 import java.io.BufferedWriter;
@@ -66,6 +56,7 @@ import javax.ws.rs.ext.MessageBodyReader;
 import javax.xml.parsers.ParserConfigurationException;
 import org.json.JSONObject;
 import org.xml.sax.SAXException;
+
 /**
  * REST Web Service
  *
@@ -73,7 +64,7 @@ import org.xml.sax.SAXException;
  */
 @ApplicationPath("")
 @Path("")
-public class Api extends Application{
+public class Api extends Application {
 
     final private String driver = "com.mysql.jdbc.Driver";
     final private String dbms_url = "jdbc:mysql://localhost/";
@@ -114,32 +105,43 @@ public class Api extends Application{
     public Api() {
         super();
     }
-    
+
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Path("prova")
     public Response getMessage() {
         Response r = Response.ok("test with GET")
-                             .build();
+                .build();
         return r;
     }
 
-    /*
+    /**
+     * Galimberti Francesco
+     *
      * http://localhost:8080/spesa/utenti
-     * http://localhost:8080/spesa/utenti?username=fraGali
-     * http://localhost:8080/spesa/utenti?nome=Francesco
-     * http://localhost:8080/spesa/utenti?cognome=Caso
-     * http://localhost:8080/spesa/utenti?regione=Lombardia
+     *
+     * Visualizza i dati relativi agli utenti memorizzati nel database
+     * permettendo di filtrare i risultati ottenuti attraverso vari parametri di
+     * query.
+     *
+     * @param username Parametro query che permette di specificare l'username
+     * dei utenti che si vogliono visualizzare
+     * @param nome Parametro query che permette di specificare il nome dei
+     * utenti che si vogliono visualizzare
+     * @param cognome Parametro query che permette di specificare il cognome dei
+     * utenti che si vogliono visualizzare
+     * @param regione Parametro query che permette di specificare il regione dei
+     * utenti che si vogliono visualizzare
      */
     @GET
     @Produces(MediaType.TEXT_XML)
     @Consumes(MediaType.TEXT_PLAIN)
     @Path("utenti")
-    public Response getUtenti(@PathParam(value = "utenti") String utenti,
-            @DefaultValue("null") @QueryParam("username") String username,
-            @DefaultValue("null") @QueryParam("nome") String nome,
-            @DefaultValue("null") @QueryParam("cognome") String cognome,
-            @DefaultValue("null") @QueryParam("regione") String regione) {
+    public Response getUtenti(
+            @QueryParam("username") String username,
+            @QueryParam("nome") String nome,
+            @QueryParam("cognome") String cognome,
+            @QueryParam("regione") String regione) {
 
         init();
         String output = "";
@@ -148,30 +150,31 @@ public class Api extends Application{
         // verifica stato connessione a DBMS
         if (!connected) {
 
-            r = Response.serverError().build();
+            r = Response.serverError().entity("DBMS Error, impossibile connetresi").build();
             return r;
 
         } else {
 
             try {
-                String sql = "SELECT idUtente, username, nome, cognome, codiceFiscale, regione, via, nCivico FROM utenti";
+                String sql = "SELECT idUtente, username, nome, cognome, codiceFiscale, regione, via, nCivico FROM utenti WHERE";
 
-                if (!username.equalsIgnoreCase("null")) {
-                    sql += " WHERE username='" + username + "';";
+                if (username != null) {
+                    sql += " username='" + username + "' AND";
                 }
 
-                if (!nome.equalsIgnoreCase("null")) {
-                    sql += " WHERE nome='" + nome + "';";
+                if (nome != null) {
+                    sql += " nome='" + nome + "' AND";
                 }
 
-                if (!cognome.equalsIgnoreCase("null")) {
-                    sql += " WHERE cognome='" + cognome + "';";
+                if (cognome != null) {
+                    sql += " cognome='" + cognome + "' AND";
                 }
 
-                if (!regione.equalsIgnoreCase("null")) {
-                    sql += " WHERE regione='" + regione + "';";
+                if (regione != null) {
+                    sql += " regione='" + regione + "' AND";
                 }
 
+                sql = sql + " 1";
                 // ricerca nominativo nel database
                 Statement statement = spesaDatabase.createStatement();
                 ResultSet result = statement.executeQuery(sql);
@@ -192,9 +195,10 @@ public class Api extends Application{
                 result.close();
                 statement.close();
 
-                output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-                output += "<elencoUtenti>";
                 if (utentiList.size() > 0) {
+                    output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+                    output += "<elencoUtenti>";
+                
                     for (int i = 0; i < utentiList.size(); i++) {
                         Utente u = utentiList.get(i);
                         output += "<Utente>";
@@ -208,52 +212,64 @@ public class Api extends Application{
                         output += "<nCivico>" + u.getnCivico() + "</nCivico>";
                         output += "</Utente>";
                     }
+                    output += "</elencoUtenti>";
                     utentiList = new ArrayList<Utente>(0);
+                    
+                    destroy();
+                    r = Response.ok(output).build();
+                    return r;
+                    
+                }else{
+                    destroy();
+                    r = Response.status(404).entity("Utente non trovato").build();
+                    return r;
                 }
-                output += "</elencoUtenti>";
-                destroy();
-                
-                r = Response.ok(output).build();
-                return r;
-                
             } catch (SQLException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
                 r = Response.serverError().build();
                 return r;
-            }   
-            
+            }
         }
     }
 
     /**
-     * AGGIORNAMENTO DI UN UTENTE con idUtente nell'url e nel body xmlUtente
-     *
-     * PUT spesa/utenti/1
+     * Galimberti Francesco PUT spesa/utenti/1
      *
      * body examples
-      <utente>
-      <idUtente>1</idUtente>
-      <username>fraGali</username>
-      <nome>Francesco</nome>
-      <cognome>Galimberti</cognome>
-      <codiceFiscale>GLMFNC01A02B729Q</codiceFiscale>
-      <regione>Lombardia</regione>
-      <via>Giacomo Leopardi</via>
-      <nCivico>5</nCivico>
-      </utente>
+     * <utente>
+     * <idUtente>1</idUtente>
+     * <username>fraGali</username>
+     * <nome>Francesco</nome>
+     * <cognome>Galimberti</cognome>
+     * <codiceFiscale>GLMFNC01A02B729Q</codiceFiscale>
+     * <regione>Lombardia</regione>
+     * <via>Giacomo Leopardi</via>
+     * <nCivico>5</nCivico>
+     * </utente>
+     *
+     * Consente la modifica di un utente andando a specificarne l'ID tramite il
+     * percorso
+     *
+     * @param idUtente identificativo dell'utente da modificare
+     * @param content Body della richiesta PUT http/https contenente i nuovi
+     * valori degli attributi dell'utente specificato nel percorso sottoforma di
+     * XML
+     * @return Risposta, con messaggio e stato
      */
     @PUT
     @Path("utenti/{idUtente}")
     @Consumes({MediaType.TEXT_PLAIN, MediaType.TEXT_XML})
-    public String putUtente(@PathParam("idUtente") String idUtente,
+    public Response putUtente(@PathParam("idUtente") String idUtente,
             String content) {
         // verifica stato connessione a DBMS
         init();
         MyParser myParse;
+        Response r;
 
         if (!connected) {
-            return "<errorMessage>400</errorMessage>";
+            r = Response.serverError().entity("DBMS Error, impossibile connettersi").build();
+            return r;
         } else {
             try {
 
@@ -267,13 +283,16 @@ public class Api extends Application{
                 Utente u = myParse.parseFileUtente("utente.xml");
 
                 if (u.getIdUtente() == null || u.getNome() == null || u.getCognome() == null || u.getCognome() == null || u.getCodiceFiscale() == null || u.getRegione() == null || u.getnCivico() == null || u.getVia() == null || u.getUsername() == null) {
-                    return "<errorMessage>400</errorMessage>";
+                    r = Response.status(404).entity("Error, Malformed XML Body").build();
+                    return r;
                 }
                 if (u.getIdUtente().isEmpty() || u.getNome().isEmpty() || u.getCognome().isEmpty() || u.getCognome().isEmpty() || u.getCodiceFiscale().isEmpty() || u.getRegione().isEmpty() || u.getnCivico().isEmpty() || u.getVia().isEmpty() || u.getUsername().isEmpty()) {
-                    return "<errorMessage>400</errorMessage>";
+                    r = Response.status(404).entity("Error, Malformed XML Body").build();
+                    return r;
                 }
                 if (!u.getIdUtente().equalsIgnoreCase(idUtente)) {
-                    return "<errorMessage>400</errorMessage>";
+                    r = Response.status(404).entity("Error, idUtente non congruente").build();
+                    return r;
                 }
 
                 Statement statement = spesaDatabase.createStatement();
@@ -281,54 +300,60 @@ public class Api extends Application{
 
                 if (statement.executeUpdate(sql) <= 0) {
                     statement.close();
-                    return "<errorMessage>404</errorMessage>";
+                    r = Response.serverError().entity("DBMS SQL Error, impossibile modificare utenti").build();
+                    return r;
                 }
 
                 statement.close();
                 destroy();
-                return "<message>Update avvenuto correttamente</message>";
+                r = Response.ok("Update avvenuto correttamente").build();
+                return r;
 
             } catch (IOException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                return "<errorMessage>404</errorMessage>";
+                r = Response.serverError().entity("DBMS IO Error").build();
+
             } catch (SQLException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                return "<errorMessage>500</errorMessage>";
+                r = Response.serverError().entity("DBMS SQL Error").build();
+
             } catch (ParserConfigurationException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                return "<errorMessage>500</errorMessage>";
+                r = Response.status(400).entity("Error, Malformed XML Body").build();
+
             } catch (SAXException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                return "<errorMessage>500</errorMessage>";
+                r = Response.serverError().entity("DBMS SAXE Error").build();
             }
+            return r;
         }
     }
 
     /**
-     * ELIMINAZIONE DI UNA RICHIESTA DI SPESA con idRichiesta nell'url
+     * Galimberti Francesco DELETE spesa/richieste/1
      *
-     * DELETE spesa/richieste/1
+     * Consente di eliminare una richiesta andando a specificarne l'ID tramite
+     * il percorso
+     *
+     * @param idRichiesta ID della richiesta da eliminare
+     * @return Risposta, con messaggio e stato
      */
     @DELETE
     @Path("richieste/{idRichiesta}")
     @Consumes(MediaType.TEXT_XML)
-    public String doDelete(@PathParam("idRichiesta") String idRichiesta) {
+    public Response deleteRichiesta(@PathParam("idRichiesta") String idRichiesta) {
 
         init();
+        Response r;
 
         if (!connected) {
-            return "<errorMessage>400</errorMessage>";
+            r = Response.serverError().entity("DBMS Error, impossibile connetresi").build();
+            return r;
         } else {
-            if (idRichiesta == null) {
-                return "<errorMessage>400</errorMessage>";
-            }
-            if (idRichiesta.isEmpty()) {
-                return "<errorMessage>400</errorMessage>";
-            }
 
             try {
                 Statement statement = spesaDatabase.createStatement();
@@ -336,43 +361,54 @@ public class Api extends Application{
 
                 if (statement.executeUpdate(sql) <= 0) {
                     statement.close();
-                    return "<errorMessage>403</errorMessage>";
+                    r = Response.serverError().entity("DBMS SQL Error, impossibile eliminare richiesta").build();
+                    return r;
                 }
 
                 statement.close();
                 destroy();
-                return "<message>Eliminazione avvenuta correttamente</message>";
+                r = Response.ok("Eliminazione avvenuta correttamente").build();
+                return r;
 
             } catch (SQLException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                return "<errorMessage>500</errorMessage>";
+                r = Response.serverError().entity("DBMS Error, impossibile modificare utenti").build();
+                return r;
             }
         }
     }
 
     /**
-     * Handles the HTTP <code>POST</code> method.
+     * Galimberti Francesco
      *
-     * INSERIMENTO RISPOSTA AD UNA RISCHIESTA DI SPESA in body risposta POST
-     * spesa/risposte
+     * POST spesa/risposte
      *
      * <risposta>
      * <idUtente>1</idUtente>
      * <idRichiesta>2</idRichiesta>
      * </risposta>
+     *
+     * Consente l'inserimento di una nuova risposta ad una richiesta di spesa
+     * all'interno del database
+     *
+     * @param content Body della richiesta POST https/https contenente il nuovo
+     * prodotto da dover memorizzare sottoforma di XML
+     * @return Risposta, con messaggio e stato
      */
     @POST
     @Consumes(MediaType.TEXT_XML)
     @Path("risposta")
-    public String postRisposta(String content) {
+    public Response postRisposta(String content) {
 
         // verifica stato connessione a DBMS
         init();
         MyParser myParse;
+        Response r;
 
         if (!connected) {
-            return "<errorMessage>400</errorMessage>";
+            r = Response.serverError().entity("DBMS Error, impossibile connetresi").build();
+            return r;
         } else {
 
             try {
@@ -383,57 +419,67 @@ public class Api extends Application{
                 file.close();
 
                 myParse = new MyParser();
-                Risposta r = myParse.parseFileRisposta("risposta.xml");
+                Risposta rr = myParse.parseFileRisposta("risposta.xml");
 
-                if (r.getIdUtente() == null || r.getIdRichiesta() == null) {
-                    return "<errorMessage>400</errorMessage>";
+                if (rr.getIdUtente() == null || rr.getIdRichiesta() == null) {
+                    r = Response.status(404).entity("Error, Malformed XML Body").build();
+                    return r;
                 }
-                if (r.getIdUtente().isEmpty() || r.getIdRichiesta().isEmpty()) {
-                    return "<errorMessage>400</errorMessage>";
+                if (rr.getIdUtente().isEmpty() || rr.getIdRichiesta().isEmpty()) {
+                    r = Response.status(404).entity("Error, Malformed XML Body").build();
+                    return r;
                 }
 
-                try {
-                    // aggiunta voce nel database
-                    Statement statement = spesaDatabase.createStatement();
-                    String sql ="INSERT risposte(rifUtente, rifRichiesta) VALUES(" + r.getIdUtente() + ", " + r.getIdRichiesta() + ");";
-                    
-                    if (statement.executeUpdate(sql) <= 0) {                        
-                        statement.close();
-                        return "<errorMessage>403</errorMessage>";
-                    }
-                    
+                // aggiunta voce nel database
+                Statement statement = spesaDatabase.createStatement();
+                String sql = "INSERT risposte(rifUtente, rifRichiesta) VALUES(" + rr.getIdUtente() + ", " + rr.getIdRichiesta() + ");";
+
+                if (statement.executeUpdate(sql) <= 0) {
                     statement.close();
-                    destroy();
-                    return "<message>Update avvenuto correttamente</message>";
-                } catch (SQLException ex) {
-                    Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
-                    destroy();
-                    return "<errorMessage>500</errorMessage>";
+                    r = Response.serverError().entity("DBMS SQL Error, impossibile modificare utenti").build();
+                    return r;
                 }
+
+                statement.close();
+                destroy();
+                r = Response.ok("Inserimento avvenuto correttamente").build();
+                return r;
+
             } catch (IOException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                return "<errorMessage>404</errorMessage>";
+                r = Response.serverError().entity("DBMS IO Error").build();
+
+            } catch (SQLException ex) {
+                Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
+                destroy();
+                r = Response.serverError().entity("DBMS SQL Error").build();
+
             } catch (ParserConfigurationException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                return "<errorMessage>404</errorMessage>";
+                r = Response.status(400).entity("Error, Malformed XML Body").build();
+
             } catch (SAXException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                return "<errorMessage>404</errorMessage>";
+                r = Response.serverError().entity("DBMS SAXE Error").build();
             }
+            return r;
 
-        }        
+        }
     }
-    
+
     /**
      * @author Tosetti_Luca
-     * 
-     * Visualizza i dati relativi alle richieste memorizzate nel database oppure di uno specifico utente andando a specificare l'id di tale utente
-     * come parametro query
-     * @param id ID dell'utente del quale si vogliono ottenere le varie richieste
-     * @return Output XML contenente le informazioni relative a una o più richieste / Output messaggio di errore
+     *
+     * Visualizza i dati relativi alle richieste memorizzate nel database oppure
+     * di uno specifico utente andando a specificare l'id di tale utente come
+     * parametro query
+     * @param id ID dell'utente del quale si vogliono ottenere le varie
+     * richieste
+     * @return Output XML contenente le informazioni relative a una o più
+     * richieste / Output messaggio di errore
      */
     @GET
     @Produces(MediaType.TEXT_PLAIN)
@@ -444,7 +490,7 @@ public class Api extends Application{
         if (!connected) {
             return "<errorMessage>400</errorMessage>";
         }
-        
+
         try {
             String sql = "SELECT idRisposta,rifRichiesta FROM risposte WHERE";
             if (id != null && id.isEmpty()) {
@@ -454,16 +500,16 @@ public class Api extends Application{
             sql = sql + " 1";
             Statement statement = spesaDatabase.createStatement();
             ResultSet result = statement.executeQuery(sql);
-            
+
             ArrayList<Risposta> risp = new ArrayList<Risposta>();
             while (result.next()) {
                 String rispID = result.getString(1);
                 String rispRifRichiesta = result.getString(2);
 
-                risp.add(new Risposta(id, rispRifRichiesta,rispID));
+                risp.add(new Risposta(id, rispRifRichiesta, rispID));
 
             }
-            
+
             if (risp.size() > 0) {
                 result.close();
                 statement.close();
@@ -473,9 +519,9 @@ public class Api extends Application{
 
                 for (int i = 0; i < risp.size(); i++) {
                     output = output + "<risposta>\n";
-                    output = output + "<idRisposta>" + risp.get(i).getIdRisposta()+ "</idRisposta>\n";
+                    output = output + "<idRisposta>" + risp.get(i).getIdRisposta() + "</idRisposta>\n";
                     output = output + "<idUtente>" + risp.get(i).getIdUtente() + "</idUtente>\n";
-                    output = output + "<idRichiesta>" + risp.get(i).getIdRichiesta()+ "</idRichiesta>\n";
+                    output = output + "<idRichiesta>" + risp.get(i).getIdRichiesta() + "</idRichiesta>\n";
                     output = output + "</risposta>\n";
                 }
 
@@ -493,21 +539,29 @@ public class Api extends Application{
         destroy();
         return output;
     }
-    
-/**  
- * @author Tosetti_Luca
- * 
- * Visualizza i dati relativi ai prodotti memorizzati nel database permettendo di filtrare i risultati ottenuti
- * attraverso vari parametri di query.
- * 
- * @param genere Parametro query che permette di specificare il genere dei prodotti che si vogliono visualizzare
- * @param etichetta Parametro query che permette di specificare l'etichetta dei prodotti che si vogliono visualizzare
- * @param costo Parametro query che permette di specificare il costo dei prodotti che si vogliono visualizzare
- * @param nome Parametro query che permette di specificare il nome dei prodotti che si vogliono visualizzare
- * @param marca Parametro query che permette di specificare la marca dei prodotti che si vogliono visualizzare 
- * @param descrizione Parametro query che permette di specificare la descrizione dei prodotti che si vogliono visualizzare
- * @return Output XML contenente le informazioni relative a uno o più prodotti / Output messaggio di errore
- */
+
+    /**
+     * @author Tosetti_Luca
+     *
+     * Visualizza i dati relativi ai prodotti memorizzati nel database
+     * permettendo di filtrare i risultati ottenuti attraverso vari parametri di
+     * query.
+     *
+     * @param genere Parametro query che permette di specificare il genere dei
+     * prodotti che si vogliono visualizzare
+     * @param etichetta Parametro query che permette di specificare l'etichetta
+     * dei prodotti che si vogliono visualizzare
+     * @param costo Parametro query che permette di specificare il costo dei
+     * prodotti che si vogliono visualizzare
+     * @param nome Parametro query che permette di specificare il nome dei
+     * prodotti che si vogliono visualizzare
+     * @param marca Parametro query che permette di specificare la marca dei
+     * prodotti che si vogliono visualizzare
+     * @param descrizione Parametro query che permette di specificare la
+     * descrizione dei prodotti che si vogliono visualizzare
+     * @return Output XML contenente le informazioni relative a uno o più
+     * prodotti / Output messaggio di errore
+     */
     @GET
     @Produces(MediaType.TEXT_XML)
     @Path("prodotto")
@@ -590,10 +644,11 @@ public class Api extends Application{
 
     /**
      * @author Tosetti_Luca
-     * 
+     *
      * Consente l'inserimento di nuovi prodotti all'interno del database
-     * 
-     * @param content Body della richiesta POST https/https contenente il/i nuovo/i prodotto/i da dover memorizzare sottoforma di XML
+     *
+     * @param content Body della richiesta POST https/https contenente il/i
+     * nuovo/i prodotto/i da dover memorizzare sottoforma di XML
      * @return Output messaggio di successo / Output messaggio di errore
      */
     @POST
@@ -643,15 +698,18 @@ public class Api extends Application{
 
     /**
      * @author Tosetti_Luca
-     * 
-     * Consente la modifica di un di un determinato prodotto andando a specificarne l'ID tramite il percorso
-     * @param content Body della richiesta PUT http/https contenente i nuovi valori degli attributi del prodotto specificato nel percorso sottoforma di XML
+     *
+     * Consente la modifica di un di un determinato prodotto andando a
+     * specificarne l'ID tramite il percorso
+     * @param content Body della richiesta PUT http/https contenente i nuovi
+     * valori degli attributi del prodotto specificato nel percorso sottoforma
+     * di XML
      * @return Output messaggio di successo / Output messaggio di errore
      */
     @PUT
     @Consumes(MediaType.TEXT_XML)
     @Path("prodotto/{idProdotto}")
-    public String putProdotto(@PathParam("idProdotto") String idProdotto,String content) {
+    public String putProdotto(@PathParam("idProdotto") String idProdotto, String content) {
         try {
             init();
 
@@ -666,11 +724,11 @@ public class Api extends Application{
             if (!connected) {
                 return "<errorMessage>400</errorMessage>";
             }
-            
-            if(prodotto.get(0).getGenere()==null || prodotto.get(0).getEtichetta()==null || prodotto.get(0).getNome()==null || prodotto.get(0).getMarca()==null || prodotto.get(0).getCosto()==0.00 || prodotto.get(0).getDescrizione()==null) {
+
+            if (prodotto.get(0).getGenere() == null || prodotto.get(0).getEtichetta() == null || prodotto.get(0).getNome() == null || prodotto.get(0).getMarca() == null || prodotto.get(0).getCosto() == 0.00 || prodotto.get(0).getDescrizione() == null) {
                 return "<errorMessage>400</errorMessage>";
             }
-            if(prodotto.get(0).getGenere().isEmpty() || prodotto.get(0).getEtichetta().isEmpty() || prodotto.get(0).getNome().isEmpty() || prodotto.get(0).getMarca().isEmpty() || prodotto.get(0).getDescrizione().isEmpty()) {
+            if (prodotto.get(0).getGenere().isEmpty() || prodotto.get(0).getEtichetta().isEmpty() || prodotto.get(0).getNome().isEmpty() || prodotto.get(0).getMarca().isEmpty() || prodotto.get(0).getDescrizione().isEmpty()) {
                 return "<errorMessage>400</errorMessage>";
             }
 
@@ -702,8 +760,9 @@ public class Api extends Application{
 
     /**
      * @author Tosetti_Luca
-     * 
-     * Consente di eliminare un prodotto andando a specificarne l'ID tramite il percorso
+     *
+     * Consente di eliminare un prodotto andando a specificarne l'ID tramite il
+     * percorso
      * @param id ID del prodotto da eliminare
      * @return Output messaggio di successo / Output messaggio di errore
      */
@@ -738,12 +797,14 @@ public class Api extends Application{
         }
 
     }
-    
+
     /**
-    *SPANGARO FRANCESCO
-    *visualizza i dati di una richiesta da id fornito nella path in formato xml come definito nella progettazione api
-    *@param id è l'id su cui si baserà la ricerca
-    * @return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
+     * SPANGARO FRANCESCO visualizza i dati di una richiesta da id fornito nella
+     * path in formato xml come definito nella progettazione api
+     *
+     * @param id è l'id su cui si baserà la ricerca
+     * @return varie tipologie di ritorno, conferma se corretto, altrimenti
+     * messaggi di errore corrispondenti
      */
     @GET
     @Path("richiestaXML/{id}")
@@ -794,11 +855,13 @@ public class Api extends Application{
     }
 
     /**
-    *SPANGARO FRANCESCO
-    *visualizza i dati di una richiesta da id fornito nella path in formato JSON come definito nella progettazione api
-    *@param id è l'id su cui si baserà la ricerca
-    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
-    */
+     * SPANGARO FRANCESCO visualizza i dati di una richiesta da id fornito nella
+     * path in formato JSON come definito nella progettazione api
+     *
+     * @param id è l'id su cui si baserà la ricerca
+     * @return varie tipologie di ritorno, conferma se corretto, altrimenti
+     * messaggi di errore corrispondenti
+     */
     @GET
     @Path("richiestaJSON/{id}")
     @Produces(MediaType.TEXT_PLAIN)
@@ -847,11 +910,14 @@ public class Api extends Application{
     }
 
     /**
-    *SPANGARO FRANCESCO
-    *inserisce i dati di un utente fornito nel body in formato XML come definito nella progettazione api
-    *@param content sono i dati inviati dall'utilizzatore, salvato nella cartella server xampp/tomcat/bin/utente.xml
-    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
-    */
+     * SPANGARO FRANCESCO inserisce i dati di un utente fornito nel body in
+     * formato XML come definito nella progettazione api
+     *
+     * @param content sono i dati inviati dall'utilizzatore, salvato nella
+     * cartella server xampp/tomcat/bin/utente.xml
+     * @return varie tipologie di ritorno, conferma se corretto, altrimenti
+     * messaggi di errore corrispondenti
+     */
     @POST
     @Path("utenteXML")
     @Consumes(MediaType.TEXT_XML)
@@ -902,11 +968,14 @@ public class Api extends Application{
     }
 
     /**
-    *SPANGARO FRANCESCO
-    *inserisce i dati di un utente fornito nel body in formato JSON come definito nella progettazione api
-    *@param content sono i dati inviati dall'utilizzatore, parsati dal metodo (libreria usata: json-20190722.jar)
-    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
-    */
+     * SPANGARO FRANCESCO inserisce i dati di un utente fornito nel body in
+     * formato JSON come definito nella progettazione api
+     *
+     * @param content sono i dati inviati dall'utilizzatore, parsati dal metodo
+     * (libreria usata: json-20190722.jar)
+     * @return varie tipologie di ritorno, conferma se corretto, altrimenti
+     * messaggi di errore corrispondenti
+     */
     @POST
     @Path("utenteJSON")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -946,11 +1015,14 @@ public class Api extends Application{
     }
 
     /**
-    *SPANGARO FRANCESCO
-    *inserisce i dati di una richiesta fornita nel body in formato XML come definito nella progettazione api
-    *@param content sono i dati inviati dall'utilizzatore, salvato nella cartella server xampp/tomcat/bin/richiesta.xml
-    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
-    */
+     * SPANGARO FRANCESCO inserisce i dati di una richiesta fornita nel body in
+     * formato XML come definito nella progettazione api
+     *
+     * @param content sono i dati inviati dall'utilizzatore, salvato nella
+     * cartella server xampp/tomcat/bin/richiesta.xml
+     * @return varie tipologie di ritorno, conferma se corretto, altrimenti
+     * messaggi di errore corrispondenti
+     */
     @POST
     @Path("richiestaXML")
     @Consumes(MediaType.TEXT_XML)
@@ -1001,11 +1073,14 @@ public class Api extends Application{
     }
 
     /**
-    *SPANGARO FRANCESCO
-    *inserisce i dati di una richiesta fornita nel body in formato JSON come definito nella progettazione api
-    *@param content sono i dati inviati dall'utilizzatore, parsati dal metodo (libreria usata: json-20190722.jar)
-    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
-    */
+     * SPANGARO FRANCESCO inserisce i dati di una richiesta fornita nel body in
+     * formato JSON come definito nella progettazione api
+     *
+     * @param content sono i dati inviati dall'utilizzatore, parsati dal metodo
+     * (libreria usata: json-20190722.jar)
+     * @return varie tipologie di ritorno, conferma se corretto, altrimenti
+     * messaggi di errore corrispondenti
+     */
     @POST
     @Path("richiestaJSON")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -1041,11 +1116,13 @@ public class Api extends Application{
     }
 
     /**
-    *SPANGARO FRANCESCO
-    *cancella una lista dal database, lista che corrisponde all'id inserito come parametro della query
-    *@param id è l'id su cui si deve basare per fare la ricerca
-    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
-    */
+     * SPANGARO FRANCESCO cancella una lista dal database, lista che corrisponde
+     * all'id inserito come parametro della query
+     *
+     * @param id è l'id su cui si deve basare per fare la ricerca
+     * @return varie tipologie di ritorno, conferma se corretto, altrimenti
+     * messaggi di errore corrispondenti
+     */
     @DELETE
     @Path("lista")
     public String deleteLista(@QueryParam("id") int id) {
@@ -1073,10 +1150,9 @@ public class Api extends Application{
     }
 
     /**
-    *SPANGARO FRANCESCO
-    *Metodo per il casting delle stringhe restituite dal database,
-    *da String a Time
-    */
+     * SPANGARO FRANCESCO Metodo per il casting delle stringhe restituite dal
+     * database, da String a Time
+     */
     public java.sql.Time getTime(String stringa) {
         DateFormat formato = new SimpleDateFormat("HH:mm:ss");
         java.sql.Time ora = null;
