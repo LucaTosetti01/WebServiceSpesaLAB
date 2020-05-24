@@ -45,6 +45,7 @@
      * 
      * http://localhost:8080/spesa/lista?rifRichiesta={id}
      * http://localhost:8080/spesa/lista
+     * @PUT
      * http://localhost:8080/spesa/updLista
      */
 package spesa;
@@ -738,9 +739,11 @@ public class Api extends Application{
 
     }
     
-    /*
-    SPANGARO FRANCESCO
-    visualizza i dati di una richiesta da id fornito nella path in formato xml come definito nella progettazione api
+    /**
+    *SPANGARO FRANCESCO
+    *visualizza i dati di una richiesta da id fornito nella path in formato xml come definito nella progettazione api
+    *@param id è l'id su cui si baserà la ricerca
+    * @return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
      */
     @GET
     @Path("richiestaXML/{id}")
@@ -753,7 +756,7 @@ public class Api extends Application{
         } else {
             try {
                 Richiesta richiesta = new Richiesta();
-                String sql = "SELECT rifUtente, oraInizioConsegna, oraFineConsegna, durataRichiesta FROM richiesta where idRichiesta ='" + id + "'";
+                String sql = "SELECT rifUtente, oraInizioConsegna, oraFineConsegna, durataRichiesta FROM richieste where idRichiesta ='" + id + "'";
                 Statement statement = spesaDatabase.createStatement();
                 ResultSet result = statement.executeQuery(sql);
 
@@ -790,10 +793,12 @@ public class Api extends Application{
         }
     }
 
-    /*
-    SPANGARO FRANCESCO
-    visualizza i dati di una richiesta da id fornito nella path in formato json come definito nella progettazione api
-     */
+    /**
+    *SPANGARO FRANCESCO
+    *visualizza i dati di una richiesta da id fornito nella path in formato JSON come definito nella progettazione api
+    *@param id è l'id su cui si baserà la ricerca
+    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
+    */
     @GET
     @Path("richiestaJSON/{id}")
     @Produces(MediaType.TEXT_PLAIN)
@@ -805,7 +810,7 @@ public class Api extends Application{
         } else {
             try {
                 Richiesta richiesta = new Richiesta();
-                String sql = "SELECT rifUtente, oraInizioConsegna, oraFineConsegna, durataRichiesta FROM richiesta where idRichiesta ='" + id + "'";
+                String sql = "SELECT rifUtente, oraInizioConsegna, oraFineConsegna, durataRichiesta FROM richieste where idRichiesta ='" + id + "'";
                 Statement statement = spesaDatabase.createStatement();
                 ResultSet result = statement.executeQuery(sql);
 
@@ -841,10 +846,12 @@ public class Api extends Application{
         }
     }
 
-    /*
-    SPANGARO FRANCESCO
-    inserisce un utente nel database, dati forniti in formato xml
-     */
+    /**
+    *SPANGARO FRANCESCO
+    *inserisce i dati di un utente fornito nel body in formato XML come definito nella progettazione api
+    *@param content sono i dati inviati dall'utilizzatore, salvato nella cartella server xampp/tomcat/bin/utente.xml
+    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
+    */
     @POST
     @Path("utenteXML")
     @Consumes(MediaType.TEXT_XML)
@@ -866,11 +873,11 @@ public class Api extends Application{
                 return "<errorMessage>400 Malformed XML</errorMessage>";
             }*/
             MyParser parse = new MyParser();
-            utente = parse.parseUtente("entry.xml");
+            utente = parse.parseUtente("utente.xml");
             if (!connected) {
                 return "<errorMessage>400</errorMessage>";
             }
-            String sql = "INSERT INTO utente(username, nome, cognome, password, codiceFiscale, regione, via, nCivico) VALUES('" + utente.getUsername() + "', '" + utente.getNome() + "', '" + utente.getCognome() + "', '" + utente.getPassword() + "', '" + utente.getCodiceFiscale() + "', '" + utente.getRegione() + "', '" + utente.getVia() + "', '" + utente.getnCivico() + "')";
+            String sql = "INSERT INTO utenti(username, nome, cognome, password, codiceFiscale, regione, via, nCivico) VALUES('" + utente.getUsername() + "', '" + utente.getNome() + "', '" + utente.getCognome() + "', '" + utente.getPassword() + "', '" + utente.getCodiceFiscale() + "', '" + utente.getRegione() + "', '" + utente.getVia() + "', '" + utente.getnCivico() + "')";
             Statement statement = spesaDatabase.createStatement();
 
             if (statement.executeUpdate(sql) <= 0) {
@@ -894,10 +901,12 @@ public class Api extends Application{
         return "<errorMessage>400</errorMessage>";
     }
 
-    /*
-    SPANGARO FRANCESCO
-    inserisce un utente nel database, dati forniti in formato json
-     */
+    /**
+    *SPANGARO FRANCESCO
+    *inserisce i dati di un utente fornito nel body in formato JSON come definito nella progettazione api
+    *@param content sono i dati inviati dall'utilizzatore, parsati dal metodo (libreria usata: json-20190722.jar)
+    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
+    */
     @POST
     @Path("utenteJSON")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -918,7 +927,7 @@ public class Api extends Application{
             if (!connected) {
                 return "<errorMessage>400</errorMessage>";
             }
-            String sql = "INSERT INTO utente(username, nome, cognome, password, codiceFiscale, regione, via, nCivico) VALUES('" + utente.getUsername() + "', '" + utente.getNome() + "', '" + utente.getCognome() + "', '" + utente.getPassword() + "', '" + utente.getCodiceFiscale() + "', '" + utente.getRegione() + "', '" + utente.getVia() + "', '" + utente.getnCivico() + "')";
+            String sql = "INSERT INTO utenti(username, nome, cognome, password, codiceFiscale, regione, via, nCivico) VALUES('" + utente.getUsername() + "', '" + utente.getNome() + "', '" + utente.getCognome() + "', '" + utente.getPassword() + "', '" + utente.getCodiceFiscale() + "', '" + utente.getRegione() + "', '" + utente.getVia() + "', '" + utente.getnCivico() + "')";
             Statement statement = spesaDatabase.createStatement();
 
             if (statement.executeUpdate(sql) <= 0) {
@@ -936,10 +945,12 @@ public class Api extends Application{
         return "<errorMessage>400</errorMessage>";
     }
 
-    /*
-    SPANGARO FRANCESCO
-    inserisce una richiesta nel database, dati forniti in formato xml
-     */
+    /**
+    *SPANGARO FRANCESCO
+    *inserisce i dati di una richiesta fornita nel body in formato XML come definito nella progettazione api
+    *@param content sono i dati inviati dall'utilizzatore, salvato nella cartella server xampp/tomcat/bin/richiesta.xml
+    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
+    */
     @POST
     @Path("richiestaXML")
     @Consumes(MediaType.TEXT_XML)
@@ -961,11 +972,11 @@ public class Api extends Application{
                 return "<errorMessage>400 Malformed XML</errorMessage>";
             }*/
             MyParser parse = new MyParser();
-            richiesta = parse.parseRichiesta("entry.xml");
+            richiesta = parse.parseRichiesta("richiesta.xml");
             if (!connected) {
                 return "<errorMessage>400</errorMessage>";
             }
-            String sql = "INSERT INTO richiesta(rifUtente, oraInizioConsegna, oraFineConsegna, durataRichiesta) VALUES(" + richiesta.getRifUtente() + ", '" + richiesta.getOraInizio() + "', '" + richiesta.getOraFine() + "', '" + richiesta.getDurata() + "')";
+            String sql = "INSERT INTO richieste(rifUtente, oraInizioConsegna, oraFineConsegna, durataRichiesta) VALUES(" + richiesta.getRifUtente() + ", '" + richiesta.getOraInizio() + "', '" + richiesta.getOraFine() + "', '" + richiesta.getDurata() + "')";
             Statement statement = spesaDatabase.createStatement();
 
             if (statement.executeUpdate(sql) <= 0) {
@@ -989,10 +1000,12 @@ public class Api extends Application{
         return "<errorMessage>400</errorMessage>";
     }
 
-    /*
-    SPANGARO FRANCESCO
-    inserisce una richiesta nel database, dati forniti in formato json
-     */
+    /**
+    *SPANGARO FRANCESCO
+    *inserisce i dati di una richiesta fornita nel body in formato JSON come definito nella progettazione api
+    *@param content sono i dati inviati dall'utilizzatore, parsati dal metodo (libreria usata: json-20190722.jar)
+    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
+    */
     @POST
     @Path("richiestaJSON")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -1009,7 +1022,7 @@ public class Api extends Application{
             if (!connected) {
                 return "<errorMessage>400</errorMessage>";
             }
-            String sql = "INSERT INTO richiesta(rifUtente, oraInizioConsegna, oraFineConsegna, durataRichiesta) VALUES(" + richiesta.getRifUtente() + ", '" + richiesta.getOraInizio() + "', '" + richiesta.getOraFine() + "', '" + richiesta.getDurata() + "')";
+            String sql = "INSERT INTO richieste(rifUtente, oraInizioConsegna, oraFineConsegna, durataRichiesta) VALUES(" + richiesta.getRifUtente() + ", '" + richiesta.getOraInizio() + "', '" + richiesta.getOraFine() + "', '" + richiesta.getDurata() + "')";
             Statement statement = spesaDatabase.createStatement();
 
             if (statement.executeUpdate(sql) <= 0) {
@@ -1027,10 +1040,12 @@ public class Api extends Application{
         return "<errorMessage>400</errorMessage>";
     }
 
-    /*
-    SPANGARO FRANCESCO
-    cancella una lista dal database, basandosi sull'id fornito nella api
-     */
+    /**
+    *SPANGARO FRANCESCO
+    *cancella una lista dal database, lista che corrisponde all'id inserito come parametro della query
+    *@param id è l'id su cui si deve basare per fare la ricerca
+    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
+    */
     @DELETE
     @Path("delLista")
     public String deleteLista(@QueryParam("id") int id) {
@@ -1040,7 +1055,7 @@ public class Api extends Application{
             return "<errorMessage>400</errorMessage>";
         }
         try {
-            String sql = "DELETE FROM lista WHERE idLista='" + id + "'";
+            String sql = "DELETE FROM liste WHERE idLista='" + id + "'";
             Statement statement = spesaDatabase.createStatement();
 
             if (statement.executeUpdate(sql) <= 0) {
@@ -1057,6 +1072,11 @@ public class Api extends Application{
         }
     }
 
+    /**
+    *SPANGARO FRANCESCO
+    *Metodo per il casting delle stringhe restituite dal database,
+    *da String a Time
+    */
     public java.sql.Time getTime(String stringa) {
         DateFormat formato = new SimpleDateFormat("HH:mm:ss");
         java.sql.Time ora = null;
