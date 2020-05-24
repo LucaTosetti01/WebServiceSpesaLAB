@@ -28,7 +28,7 @@
  * http://localhost:8080/spesa/utenti?username={username}&nome={nome}...
  * @POST http://localhost:8080/spesa/risposta
  * @PUT http://localhost:8080/spesa/utenti/{idUtente}
- * @DELETE http://localhost:8080/spesa/richieste/{idRichiesta}
+ * @DELETE http://localhost:8080/spesa/richieste/{idRichiesta}/{idUtente}
  */
 /**
  * ROVELLI ANDREA
@@ -198,7 +198,7 @@ public class Api extends Application {
                 if (utentiList.size() > 0) {
                     output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
                     output += "<elencoUtenti>";
-                
+
                     for (int i = 0; i < utentiList.size(); i++) {
                         Utente u = utentiList.get(i);
                         output += "<Utente>";
@@ -214,12 +214,12 @@ public class Api extends Application {
                     }
                     output += "</elencoUtenti>";
                     utentiList = new ArrayList<Utente>(0);
-                    
+
                     destroy();
                     r = Response.ok(output).build();
                     return r;
-                    
-                }else{
+
+                } else {
                     destroy();
                     r = Response.status(404).entity("Utente non trovato").build();
                     return r;
@@ -334,18 +334,19 @@ public class Api extends Application {
     }
 
     /**
-     * Galimberti Francesco DELETE spesa/richieste/1
+     * Galimberti Francesco DELETE spesa/richieste/1/1
      *
      * Consente di eliminare una richiesta andando a specificarne l'ID tramite
-     * il percorso
+     * il percorso sia della richiesta che dell'utente
      *
      * @param idRichiesta ID della richiesta da eliminare
+     * @param idUtente ID dell'utente collegato alla richiesta da eliminare
      * @return Risposta, con messaggio e stato
      */
     @DELETE
-    @Path("richieste/{idRichiesta}")
+    @Path("richieste/{idRichiesta}/{idUtente}")
     @Consumes(MediaType.TEXT_XML)
-    public Response deleteRichiesta(@PathParam("idRichiesta") String idRichiesta) {
+    public Response deleteRichiesta(@PathParam("idRichiesta") int idRichiesta, @PathParam("idUtente") int idUtente) {
 
         init();
         Response r;
@@ -355,25 +356,29 @@ public class Api extends Application {
             return r;
         } else {
 
-            try {
-                Statement statement = spesaDatabase.createStatement();
-                String sql = "DELETE FROM richieste WHERE idRichiesta = " + idRichiesta + ";";
+            if (idRichiesta != 0 && idUtente != 0) {
+                try {
+                    Statement statement = spesaDatabase.createStatement();
+                    String sql = "DELETE FROM richieste WHERE idRichiesta = '" + idRichiesta + "' AND rifUtente = '" + idUtente + "';";
+                
+                    if (statement.executeUpdate(sql) <= 0) {
+                        statement.close();
+                        r = Response.serverError().entity("DBMS SQL Error, impossibile eliminare richiesta").build();
+                        return r;
+                    }
 
-                if (statement.executeUpdate(sql) <= 0) {
                     statement.close();
-                    r = Response.serverError().entity("DBMS SQL Error, impossibile eliminare richiesta").build();
+                    destroy();
+                    r = Response.ok("Eliminazione avvenuta correttamente").build();
+                    return r;
+                    
+                } catch (SQLException ex) {
+                    destroy();
+                    r = Response.serverError().entity("DBMS Error, impossibile eliminare richiesta").build();
                     return r;
                 }
-
-                statement.close();
-                destroy();
-                r = Response.ok("Eliminazione avvenuta correttamente").build();
-                return r;
-
-            } catch (SQLException ex) {
-                Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
-                destroy();
-                r = Response.serverError().entity("DBMS Error, impossibile modificare utenti").build();
+            } else {
+                r = Response.status(404).entity("Error, idRichiesta o idUtente inappropriato").build();
                 return r;
             }
         }
