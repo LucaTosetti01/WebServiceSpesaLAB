@@ -1,31 +1,43 @@
 /**
      * TOSETTI LUCA
      * 
-     * http://localhost:8080/spesa/getRisposte
-     * http://localhost:8080/spesa/getProdotto
-     * http://localhost:8080/spesa/postProdotto
-     * http://localhost:8080/spesa/putProdotto
-     * http://localhost:8080/spesa/deleteProdotto
+     * @GET
+     * http://localhost:8080/spesa/risposte
+     * http://localhost:8080/spesa/prodotto?genere={genere}&nome={nome}...
+     * @POST
+     * http://localhost:8080/spesa/prodotto
+     * @PUT
+     * http://localhost:8080/spesa/prodotto/{idProdotto}
+     * @DELETE
+     * http://localhost:8080/spesa/prodotto/{idProdotto}
      */
 
 /**
      * SPANGARO FRANCESCO
      * 
+     * @GET
      * http://localhost:8080/spesa/richiestaXML/{id}
      * http://localhost:8080/spesa/richiestaJSON/{id}
+     * @POST
      * http://localhost:8080/spesa/utenteXML
      * http://localhost:8080/spesa/utenteJSON
+     * http://localhost:8080/spesa/richiestaXML
+     * http://localhost:8080/spesa/richiestaJSON
+     * @DELETE
      * http://localhost:8080/spesa/delLista?id={id}
      */
 
 /**
      * GALIMBERTI FRANCESCO
      * 
-     * http://localhost:8080/spesa/
-     * http://localhost:8080/spesa/
-     * http://localhost:8080/spesa/
-     * http://localhost:8080/spesa/
-     * http://localhost:8080/spesa/
+     * @GET
+     * http://localhost:8080/spesa/utenti
+     * @POST
+     * http://localhost:8080/spesa/risposta
+     * @PUT
+     * http://localhost:8080/spesa/utenti/{idUtente}
+     * @DELETE
+     * http://localhost:8080/spesa/richieste/{idRichiesta}
      */
 
 /**
@@ -233,7 +245,7 @@ public class Api extends Application{
     @PUT
     @Path("utenti/{idUtente}")
     @Consumes({MediaType.TEXT_PLAIN, MediaType.TEXT_XML})
-    protected String putUtente(@PathParam("idUtente") String idUtente,
+    public String putUtente(@PathParam("idUtente") String idUtente,
             String content) {
         // verifica stato connessione a DBMS
         init();
@@ -303,7 +315,7 @@ public class Api extends Application{
     @DELETE
     @Path("richieste/{idRichiesta}")
     @Consumes(MediaType.TEXT_XML)
-    protected String doDelete(@PathParam("idRichiesta") String idRichiesta) {
+    public String doDelete(@PathParam("idRichiesta") String idRichiesta) {
 
         init();
 
@@ -351,7 +363,7 @@ public class Api extends Application{
      */
     @POST
     @Consumes(MediaType.TEXT_XML)
-    @Path("Risposta")
+    @Path("risposta")
     public String postRisposta(String content) {
 
         // verifica stato connessione a DBMS
@@ -414,10 +426,17 @@ public class Api extends Application{
         }        
     }
     
-    
+    /**
+     * @author Tosetti_Luca
+     * 
+     * Visualizza i dati relativi alle richieste memorizzate nel database oppure di uno specifico utente andando a specificare l'id di tale utente
+     * come parametro query
+     * @param id ID dell'utente del quale si vogliono ottenere le varie richieste
+     * @return Output XML contenente le informazioni relative a una o più richieste / Output messaggio di errore
+     */
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    @Path("getRisposte")
+    @Path("risposte")
     public String getRisposte(@QueryParam("id") String id) {
         init();
         String output = "";
@@ -474,9 +493,23 @@ public class Api extends Application{
         return output;
     }
     
+/**  
+ * @author Tosetti_Luca
+ * 
+ * Visualizza i dati relativi ai prodotti memorizzati nel database permettendo di filtrare i risultati ottenuti
+ * attraverso vari parametri di query.
+ * 
+ * @param genere Parametro query che permette di specificare il genere dei prodotti che si vogliono visualizzare
+ * @param etichetta Parametro query che permette di specificare l'etichetta dei prodotti che si vogliono visualizzare
+ * @param costo Parametro query che permette di specificare il costo dei prodotti che si vogliono visualizzare
+ * @param nome Parametro query che permette di specificare il nome dei prodotti che si vogliono visualizzare
+ * @param marca Parametro query che permette di specificare la marca dei prodotti che si vogliono visualizzare 
+ * @param descrizione Parametro query che permette di specificare la descrizione dei prodotti che si vogliono visualizzare
+ * @return Output XML contenente le informazioni relative a uno o più prodotti / Output messaggio di errore
+ */
     @GET
     @Produces(MediaType.TEXT_XML)
-    @Path("Prodotto")
+    @Path("prodotto")
     public String getProdotto(@QueryParam("genere") String genere, @QueryParam("etichetta") String etichetta, @QueryParam("costo") double costo, @QueryParam("nome") String nome, @QueryParam("marca") String marca, @QueryParam("descrizione") String descrizione) {
         init();
         String output = "";
@@ -554,9 +587,17 @@ public class Api extends Application{
         return output;
     }
 
+    /**
+     * @author Tosetti_Luca
+     * 
+     * Consente l'inserimento di nuovi prodotti all'interno del database
+     * 
+     * @param content Body della richiesta POST https/https contenente il/i nuovo/i prodotto/i da dover memorizzare sottoforma di XML
+     * @return Output messaggio di successo / Output messaggio di errore
+     */
     @POST
     @Consumes(MediaType.TEXT_XML)
-    @Path("Prodotto")
+    @Path("prodotto")
     public String postProdotto(String content) {
         try {
             init();
@@ -599,10 +640,17 @@ public class Api extends Application{
         return "<errorMessage>400</errorMessage>";
     }
 
+    /**
+     * @author Tosetti_Luca
+     * 
+     * Consente la modifica di un di un determinato prodotto andando a specificarne l'ID tramite il percorso
+     * @param content Body della richiesta PUT http/https contenente i nuovi valori degli attributi del prodotto specificato nel percorso sottoforma di XML
+     * @return Output messaggio di successo / Output messaggio di errore
+     */
     @PUT
     @Consumes(MediaType.TEXT_XML)
-    @Path("Prodotto")
-    public String putProdotto(String content) {
+    @Path("prodotto/{idProdotto}")
+    public String putProdotto(@PathParam("idProdotto") String idProdotto,String content) {
         try {
             init();
 
@@ -618,7 +666,7 @@ public class Api extends Application{
                 return "<errorMessage>400</errorMessage>";
             }
             
-            if(prodotto.get(0).getIdProdotto()==0 || prodotto.get(0).getGenere()==null || prodotto.get(0).getEtichetta()==null || prodotto.get(0).getNome()==null || prodotto.get(0).getMarca()==null || prodotto.get(0).getCosto()==0.00 || prodotto.get(0).getDescrizione()==null) {
+            if(prodotto.get(0).getGenere()==null || prodotto.get(0).getEtichetta()==null || prodotto.get(0).getNome()==null || prodotto.get(0).getMarca()==null || prodotto.get(0).getCosto()==0.00 || prodotto.get(0).getDescrizione()==null) {
                 return "<errorMessage>400</errorMessage>";
             }
             if(prodotto.get(0).getGenere().isEmpty() || prodotto.get(0).getEtichetta().isEmpty() || prodotto.get(0).getNome().isEmpty() || prodotto.get(0).getMarca().isEmpty() || prodotto.get(0).getDescrizione().isEmpty()) {
@@ -626,7 +674,7 @@ public class Api extends Application{
             }
 
             try {
-                String sql = "UPDATE prodotti SET nome='" + prodotto.get(0).getNome() + "', genere='" + prodotto.get(0).getGenere() + "', etichetta='" + prodotto.get(0).getEtichetta() + "', costo='" + prodotto.get(0).getCosto() + "', nome='" + prodotto.get(0).getNome() + "', marca='" + prodotto.get(0).getMarca() + "', descrizione='" + prodotto.get(0).getDescrizione() + "' WHERE idProdotto='" + prodotto.get(0).getIdProdotto() + "'";
+                String sql = "UPDATE prodotti SET nome='" + prodotto.get(0).getNome() + "', genere='" + prodotto.get(0).getGenere() + "', etichetta='" + prodotto.get(0).getEtichetta() + "', costo='" + prodotto.get(0).getCosto() + "', nome='" + prodotto.get(0).getNome() + "', marca='" + prodotto.get(0).getMarca() + "', descrizione='" + prodotto.get(0).getDescrizione() + "' WHERE idProdotto='" + idProdotto + "'";
                 Statement statement = spesaDatabase.createStatement();
 
                 if (statement.executeUpdate(sql) <= 0) {
@@ -651,9 +699,16 @@ public class Api extends Application{
         return "<errorMessage>400</errorMessage>";
     }
 
+    /**
+     * @author Tosetti_Luca
+     * 
+     * Consente di eliminare un prodotto andando a specificarne l'ID tramite il percorso
+     * @param id ID del prodotto da eliminare
+     * @return Output messaggio di successo / Output messaggio di errore
+     */
     @DELETE
-    @Path("Prodotto")
-    public String deleteProdotto(@QueryParam("id") int id) {
+    @Path("prodotto/{idProdotto}")
+    public String deleteProdotto(@PathParam("idProdotto") int id) {
         init();
 
         if (!connected) {
