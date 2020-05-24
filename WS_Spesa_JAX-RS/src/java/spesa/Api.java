@@ -24,7 +24,7 @@
      * http://localhost:8080/spesa/richiestaXML
      * http://localhost:8080/spesa/richiestaJSON
      * @DELETE
-     * http://localhost:8080/spesa/delLista?id={id}
+     * http://localhost:8080/spesa/lista?id={id}
      */
 
 /**
@@ -1047,7 +1047,7 @@ public class Api extends Application{
     *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
     */
     @DELETE
-    @Path("delLista")
+    @Path("lista")
     public String deleteLista(@QueryParam("id") int id) {
         init();
 
