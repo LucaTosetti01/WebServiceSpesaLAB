@@ -18,7 +18,7 @@
  * http://localhost:8080/spesa/utenteJSON
  * http://localhost:8080/spesa/richiestaXML
  * http://localhost:8080/spesa/richiestaJSON
- * @DELETE http://localhost:8080/spesa/lista?id={id}
+ * @DELETE http://localhost:8080/spesa/lista?id={rifRichiesta}
  */
 /**
  * GALIMBERTI FRANCESCO
@@ -1127,23 +1127,22 @@ public class Api extends Application {
     }
 
     /**
-     * SPANGARO FRANCESCO cancella una lista dal database, lista che corrisponde
-     * all'id inserito come parametro della query
-     *
-     * @param id è l'id su cui si deve basare per fare la ricerca
-     * @return varie tipologie di ritorno, conferma se corretto, altrimenti
-     * messaggi di errore corrispondenti
-     */
+    *SPANGARO FRANCESCO
+    *cancella una lista dal database, una lista è l'insieme dei prodotti, assegnata poi ad una richiesta, 
+    *lista che corrisponde all'id inserito come parametro della query, riferimento alla richiesta corrispondente
+    *@param id è l'id su cui si deve basare per fare la ricerca
+    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
+    */
     @DELETE
     @Path("lista")
-    public String deleteLista(@QueryParam("id") int id) {
+    public String deleteLista(@QueryParam("id") int rifRichiesta) {
         init();
 
         if (!connected) {
             return "<errorMessage>400</errorMessage>";
         }
         try {
-            String sql = "DELETE FROM liste WHERE idLista='" + id + "'";
+            String sql = "DELETE FROM liste WHERE rifRichiesta='" + rifRichiesta + "'";
             Statement statement = spesaDatabase.createStatement();
 
             if (statement.executeUpdate(sql) <= 0) {
