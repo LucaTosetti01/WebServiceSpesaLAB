@@ -33,13 +33,11 @@
 /**
  * ROVELLI ANDREA
  *
- * @GET 
+ * @GET
  * http://localhost:8080/spesa/lista?rifRichiesta={id}
- * @POST
- * http://localhost:8080/spesa/lista
+ * @POST http://localhost:8080/spesa/lista
  *
- * @PUT 
- * http://localhost:8080/spesa/updLista
+ * @PUT http://localhost:8080/spesa/updLista
  */
 package spesa;
 
@@ -1176,9 +1174,15 @@ public class Api extends Application {
     }
 
     /**
-     * REST Web Service
+     * @author Rovelli Andrea
      *
-     * @author Ziz
+     * GET spesa/lista
+     *
+     * Consente di ottenere la lista della spesa di un determinato utente
+     *
+     * @param id Parametro che identifica la lista di un determinato utente
+     *
+     * @return Risposta, con messaggio e stato
      */
     @GET
     @Produces(MediaType.TEXT_XML)
@@ -1252,6 +1256,19 @@ public class Api extends Application {
         return output;
     }
 
+    /**
+     * @author Rovelli Andrea
+     *
+     * POST spesa/lista
+     *
+     * Consente di inserire nella lista della spesa un nuovo prodotto
+     *
+     * @param content Body contenente tutti i valori necessari all'esecuzione
+     * della POST come il riferimento alla richiesta, al prodotto e la quantità
+     * da comprare
+     *
+     * @return Risposta, con messaggio e stato
+     */
     @POST
     @Consumes(MediaType.TEXT_XML)
     @Path("lista")
@@ -1297,6 +1314,20 @@ public class Api extends Application {
         return "<errorMessage>400</errorMessage>";
     }
 
+    /**
+     * @author Rovelli Andrea
+     *
+     * PUT spesa/lista
+     *
+     * Consente di aggiornare un prodotto all'interno di una lista della spesa
+     *
+     * @param content Body contenente tutti i valori necessari all'esecuzione
+     * della PUT come l'identificativo di un prodotto all'interno di una lista,
+     * il riferimento alla richiesta, al prodotto e la quantità da comprare
+     *
+     * @return Risposta, con messaggio e stato
+     */
+    
     @PUT
     @Consumes(MediaType.TEXT_XML)
     @Path("lista")
