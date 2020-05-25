@@ -490,18 +490,18 @@ public class Api extends Application {
      * richieste / Output messaggio di errore
      */
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_XML)
     @Path("risposte")
-    public String getRisposte(@QueryParam("id") String id) {
+    public String getRisposte(@QueryParam("idUtente") String id) {
         init();
         String output = "";
         if (!connected) {
-            return "<errorMessage>400</errorMessage>";
+            return "<errorMessage>500</errorMessage>";
         }
 
         try {
-            String sql = "SELECT idRisposta,rifRichiesta FROM risposte WHERE";
-            if (id != null && id.isEmpty()) {
+            String sql = "SELECT idRisposta,rifRichiesta,rifUtente FROM risposte WHERE";
+            if (id != null && !id.isEmpty()) {
                 sql = sql + " rifUtente='" + id + "' AND";
             }
 
@@ -513,8 +513,8 @@ public class Api extends Application {
             while (result.next()) {
                 String rispID = result.getString(1);
                 String rispRifRichiesta = result.getString(2);
-
-                risp.add(new Risposta(id, rispRifRichiesta, rispID));
+                String rispRifUtente = result.getString(3);
+                risp.add(new Risposta(rispRifUtente, rispRifRichiesta, rispID));
 
             }
 
@@ -523,22 +523,22 @@ public class Api extends Application {
                 statement.close();
 
                 output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-                output = output + "<return>\n";
+                output = output + "<elencoRisposte>\n";
 
                 for (int i = 0; i < risp.size(); i++) {
                     output = output + "<risposta>\n";
+                    output = output + "<rifUtente>" + risp.get(i).getIdUtente() + "</rifUtente>\n";
                     output = output + "<idRisposta>" + risp.get(i).getIdRisposta() + "</idRisposta>\n";
-                    output = output + "<idUtente>" + risp.get(i).getIdUtente() + "</idUtente>\n";
-                    output = output + "<idRichiesta>" + risp.get(i).getIdRichiesta() + "</idRichiesta>\n";
+                    output = output + "<rifRichiesta>" + risp.get(i).getIdRichiesta() + "</rifRichiesta>\n";
                     output = output + "</risposta>\n";
                 }
 
-                output = output + "</return>\n";
+                output = output + "</elencoRisposte>\n";
             } else {
                 result.close();
                 statement.close();
                 destroy();
-                return "<errorMessage>404</errorMessage>";
+                return output;
             }
         } catch (SQLException ex) {
             destroy();
@@ -577,7 +577,7 @@ public class Api extends Application {
         init();
         String output = "";
         if (!connected) {
-            return "<errorMessage>400</errorMessage>";
+            return "<errorMessage>500</errorMessage>";
         }
 
         try {
@@ -596,6 +596,9 @@ public class Api extends Application {
             }
             if (marca != null) {
                 sql = sql + " marca='" + marca + "' AND";
+            }
+            if (descrizione != null) {
+                sql = sql + " descrizione='" + descrizione + "' AND";
             }
 
             sql = sql + " 1";
@@ -640,7 +643,7 @@ public class Api extends Application {
                 result.close();
                 statement.close();
                 destroy();
-                return "<errorMessage>404</errorMessage>";
+                return output;
             }
         } catch (SQLException ex) {
             destroy();
@@ -675,7 +678,7 @@ public class Api extends Application {
 
             ArrayList<Prodotto> prodotti = (ArrayList<Prodotto>) myParse.parseProdotto("prodotti.xml");
             if (!connected) {
-                return "<errorMessage>400</errorMessage>";
+                return "<errorMessage>500</errorMessage>";
             }
 
             try {
@@ -684,7 +687,7 @@ public class Api extends Application {
 
                 if (statement.executeUpdate(sql) <= 0) {
                     statement.close();
-                    return "<errorMessage>403</errorMessage>";
+                    return "<errorMessage>500</errorMessage>";
                 }
 
                 statement.close();
@@ -730,14 +733,14 @@ public class Api extends Application {
 
             ArrayList<Prodotto> prodotto = (ArrayList<Prodotto>) myParse.parseProdotto("prodotti.xml");
             if (!connected) {
-                return "<errorMessage>400</errorMessage>";
+                return "<errorMessage>500</errorMessage>";
             }
 
             if (prodotto.get(0).getGenere() == null || prodotto.get(0).getEtichetta() == null || prodotto.get(0).getNome() == null || prodotto.get(0).getMarca() == null || prodotto.get(0).getCosto() == 0.00 || prodotto.get(0).getDescrizione() == null) {
-                return "<errorMessage>400</errorMessage>";
+                return "<errorMessage>406</errorMessage>";
             }
             if (prodotto.get(0).getGenere().isEmpty() || prodotto.get(0).getEtichetta().isEmpty() || prodotto.get(0).getNome().isEmpty() || prodotto.get(0).getMarca().isEmpty() || prodotto.get(0).getDescrizione().isEmpty()) {
-                return "<errorMessage>400</errorMessage>";
+                return "<errorMessage>406</errorMessage>";
             }
 
             try {
@@ -746,7 +749,7 @@ public class Api extends Application {
 
                 if (statement.executeUpdate(sql) <= 0) {
                     statement.close();
-                    return "<errorMessage>403</errorMessage>";
+                    return "<errorMessage>500</errorMessage>";
                 }
 
                 statement.close();
@@ -780,7 +783,7 @@ public class Api extends Application {
         init();
 
         if (!connected) {
-            return "<errorMessage>400</errorMessage>";
+            return "<errorMessage>500</errorMessage>";
         }
 
         if (id != 0) {
@@ -790,7 +793,7 @@ public class Api extends Application {
 
                 if (statement.executeUpdate(sql) <= 0) {
                     statement.close();
-                    return "<errorMessage>403</errorMessage>";
+                    return "<errorMessage>500</errorMessage>";
                 }
 
                 statement.close();
@@ -1178,7 +1181,7 @@ public class Api extends Application {
      * @author Ziz
      */
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_XML)
     @Path("lista")
     public String getLista(@QueryParam("rifRichiesta") String id) {
 
@@ -1189,7 +1192,7 @@ public class Api extends Application {
         }
 
         try {
-            String sql = "SELECT Costo,Nome,Marca FROM prodotto p, lista l WHERE p.idProdotto = l.rifProdotto AND ";
+            String sql = "SELECT Costo,Nome,Marca FROM prodotti p, liste l WHERE p.idProdotto = l.rifProdotto AND ";
             if (!id.isEmpty()) {
                 sql = sql + " l.rifRichiesta='" + id + "'";
             }
