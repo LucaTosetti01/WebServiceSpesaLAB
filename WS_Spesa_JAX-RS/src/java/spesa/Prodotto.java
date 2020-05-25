@@ -73,6 +73,12 @@ public class Prodotto {
     public void setDescrizione(String descrizione) {
         this.descrizione = descrizione;
     }
+    
+    public Prodotto(double costo, String marca, String nome) {
+        this.costo = costo;
+        this.marca = marca;
+        this.nome = nome;
+    }
 
     public Prodotto(int idProdotto, String genere, String etichetta, double costo, String nome, String marca, String descrizione) {
         this.idProdotto = idProdotto;

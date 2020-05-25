@@ -17,10 +17,10 @@ public class MyParser {
     boolean controllo = false;
     private Utente utentet;
     private Richiesta richiestat;
-    private List lista;
+    private List liste;
     
     public MyParser() {
-        lista = new ArrayList();
+        liste = new ArrayList();
     }
     
     public Utente parseUtente(String filename) throws ParserConfigurationException, SAXException, IOException {
@@ -217,7 +217,7 @@ public class MyParser {
     
     
     public List parseProdotto(String filename) throws ParserConfigurationException, SAXException, IOException {
-        lista.clear();
+        liste.clear();
         DocumentBuilderFactory factory;
         DocumentBuilder builder;
         Document document;
@@ -237,11 +237,65 @@ public class MyParser {
                 // solo la prima table contiene cio che mi interessa
                 element = (Element) nodelist.item(i);
                 prodotto = getProdotto(element);
-                lista.add(prodotto);
+                liste.add(prodotto);
             }
         }
 
+        return liste;
+    }
+    
+    public List parseDocument(String filename, String method) throws ParserConfigurationException, SAXException, IOException {
+        DocumentBuilderFactory factory;
+        DocumentBuilder builder;
+        Document document;
+        Element root, element;
+        NodeList nodelist;
+        Lista lista;
+        // creazione dell’albero DOM dal documento XML
+        factory = DocumentBuilderFactory.newInstance();
+        builder = factory.newDocumentBuilder();
+        document = builder.parse(filename);
+
+        root = document.getDocumentElement();
+        // generazione della lista degli elementi "table"        
+        nodelist = root.getElementsByTagName("lista");
+        if (nodelist != null && nodelist.getLength() > 0) {
+            for (int i = 0; i < nodelist.getLength(); i++) {
+                // solo la prima table contiene cio che mi interessa
+                element = (Element) nodelist.item(i);
+                lista = getLista(element, method);
+                liste.add(lista);
+            }
+        }
+
+        return liste;
+    }
+    
+    private Lista getLista(Element element1, String method) {
+        Lista lista = null;
+        try {
+            int rifRichiesta = MyLibXML.getIntValue(element1, "rifRichiesta");
+            int rifProdotto = MyLibXML.getIntValue(element1, "rifProdotto");
+            int quantita = MyLibXML.getIntValue(element1, "quantita");
+
+            if (method.equals("post")) {
+
+                lista = new Lista(rifRichiesta, rifProdotto, quantita);
+            
+            }else if (method.equals("put")) {
+
+                int idLista = MyLibXML.getIntValue(element1, "idLista");
+                lista = new Lista(idLista, rifRichiesta, rifProdotto, quantita);
+            }
+            
+            
+            
+
+        } catch (Exception ex) {
+
+        }
         return lista;
+
     }
 
 

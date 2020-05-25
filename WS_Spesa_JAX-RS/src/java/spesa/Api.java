@@ -33,10 +33,13 @@
 /**
  * ROVELLI ANDREA
  *
+ * @GET 
  * http://localhost:8080/spesa/lista?rifRichiesta={id}
+ * @POST
  * http://localhost:8080/spesa/lista
  *
- * @PUT http://localhost:8080/spesa/updLista
+ * @PUT 
+ * http://localhost:8080/spesa/updLista
  */
 package spesa;
 
@@ -360,7 +363,7 @@ public class Api extends Application {
                 try {
                     Statement statement = spesaDatabase.createStatement();
                     String sql = "DELETE FROM richieste WHERE idRichiesta = '" + idRichiesta + "' AND rifUtente = '" + idUtente + "';";
-                
+
                     if (statement.executeUpdate(sql) <= 0) {
                         statement.close();
                         r = Response.serverError().entity("DBMS SQL Error, impossibile eliminare richiesta").build();
@@ -371,7 +374,7 @@ public class Api extends Application {
                     destroy();
                     r = Response.ok("Eliminazione avvenuta correttamente").build();
                     return r;
-                    
+
                 } catch (SQLException ex) {
                     destroy();
                     r = Response.serverError().entity("DBMS Error, impossibile eliminare richiesta").build();
@@ -1167,6 +1170,173 @@ public class Api extends Application {
             Logger.getLogger(MyParser.class.getName()).log(Level.SEVERE, null, ex);
         }
         return ora;
+    }
+
+    /**
+     * REST Web Service
+     *
+     * @author Ziz
+     */
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    @Path("lista")
+    public String getLista(@QueryParam("rifRichiesta") String id) {
+
+        init();
+        String output = "";
+        if (!connected) {
+            return "<errorMessage>400</errorMessage>";
+        }
+
+        try {
+            String sql = "SELECT Costo,Nome,Marca FROM prodotto p, lista l WHERE p.idProdotto = l.rifProdotto AND ";
+            if (!id.isEmpty()) {
+                sql = sql + " l.rifRichiesta='" + id + "'";
+            }
+
+            Statement statement = spesaDatabase.createStatement();
+            ResultSet result = statement.executeQuery(sql);
+
+            ArrayList<Prodotto> spesa = new ArrayList(0);
+
+            while (result.next()) {
+
+                double costo = result.getDouble("costo");
+                String marca = result.getString("marca");
+                String nome = result.getString("nome");
+
+                Prodotto prodotto = new Prodotto(costo, marca, nome);
+
+                spesa.add(prodotto);
+            }
+            result.close();
+            statement.close();
+
+            output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+            output += "<listaSpesa>\n";
+
+            if (!spesa.isEmpty()) {
+
+                for (int i = 0; i < spesa.size(); i++) {
+                    Prodotto p = spesa.get(i);
+
+                    output += "<prodotto>\n";
+                    output += "<costo>";
+                    output += p.getCosto();
+                    output += "</costo>\n";
+                    output += "<nome>";
+                    output += p.getNome();
+                    output += "</nome>\n";
+                    output += "<marca>";
+                    output += p.getMarca();
+                    output += "</marca>\n";
+                    output += "</prodotto>\n";
+                }
+
+                output += "</listaSpesa>\n";
+            } else {
+
+                destroy();
+                return "<errorMessage>404</errorMessage>";
+
+            }
+
+        } catch (SQLException ex) {
+            destroy();
+            return "<errorMessage>500</errorMessage>";
+        }
+        destroy();
+        return output;
+    }
+
+    @POST
+    @Consumes(MediaType.TEXT_XML)
+    @Path("lista")
+    public String postLista(String content) {
+        try {
+            init();
+
+            MyParser myParse = new MyParser();
+            BufferedWriter writer;
+            writer = new BufferedWriter(new FileWriter("lista.xml"));
+            writer.write(content);
+            writer.flush();
+            writer.close();
+
+            ArrayList<Lista> liste = (ArrayList<Lista>) myParse.parseDocument("lista.xml", "post");
+            if (!connected) {
+                return "<errorMessage>400</errorMessage>";
+            }
+
+            try {
+                String sql = "INSERT INTO liste (rifRichiesta, rifProdotto, quantita) VALUES ('" + liste.get(0).getRifRichiesta() + "','" + liste.get(0).getRifProdotto() + "','" + liste.get(0).getQuantita() + "')";
+                Statement statement = spesaDatabase.createStatement();
+
+                if (statement.executeUpdate(sql) <= 0) {
+                    statement.close();
+                    return "<errorMessage>403</errorMessage>";
+                }
+
+                statement.close();
+                destroy();
+                return "<message>Inserimento effettuato</message>";
+            } catch (SQLException ex) {
+                destroy();
+                return "<errorMessage>500</errorMessage>";
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SAXException ex) {
+            Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return "<errorMessage>400</errorMessage>";
+    }
+
+    @PUT
+    @Consumes(MediaType.TEXT_XML)
+    @Path("lista")
+    public String putLista(String content) {
+        try {
+            init();
+
+            MyParser myParse = new MyParser();
+            BufferedWriter writer;
+            writer = new BufferedWriter(new FileWriter("updLista.xml"));
+            writer.write(content);
+            writer.flush();
+            writer.close();
+
+            ArrayList<Lista> lista = (ArrayList<Lista>) myParse.parseDocument("updLista.xml", "put");
+            if (!connected) {
+                return "<errorMessage>400</errorMessage>";
+            }
+
+            try {
+                String sql = "UPDATE liste SET rifRichiesta='" + lista.get(0).getRifRichiesta() + "', rifProdotto='" + lista.get(0).getRifProdotto() + "', quantita='" + lista.get(0).getQuantita() + "' WHERE idLista='" + lista.get(0).getIdLista() + "'";
+                Statement statement = spesaDatabase.createStatement();
+
+                if (statement.executeUpdate(sql) <= 0) {
+                    statement.close();
+                    return "<errorMessage>403</errorMessage>";
+                }
+
+                statement.close();
+                destroy();
+                return "<message>Update effettuato</message>";
+            } catch (SQLException ex) {
+                destroy();
+                return "<errorMessage>500</errorMessage>";
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SAXException ex) {
+            Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return "<errorMessage>400</errorMessage>";
     }
 
 }
