@@ -202,7 +202,7 @@ public class Api extends Application {
 
                     for (int i = 0; i < utentiList.size(); i++) {
                         Utente u = utentiList.get(i);
-                        output += "<Utente>";
+                        output += "<utente>";
                         output += "<idUtente>" + u.getIdUtente() + "</idUtente>";
                         output += "<username>" + u.getUsername() + "</username>";
                         output += "<nome>" + u.getNome() + "</nome>";
@@ -211,7 +211,7 @@ public class Api extends Application {
                         output += "<regione>" + u.getRegione() + "</regione>";
                         output += "<via>" + u.getVia() + "</via>";
                         output += "<nCivico>" + u.getnCivico() + "</nCivico>";
-                        output += "</Utente>";
+                        output += "</utente>";
                     }
                     output += "</elencoUtenti>";
                     utentiList = new ArrayList<Utente>(0);
