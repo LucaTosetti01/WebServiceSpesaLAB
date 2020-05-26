@@ -1325,6 +1325,17 @@ public class Api extends Application {
      * il riferimento alla richiesta, al prodotto e la quantità da comprare
      *
      * @return Risposta, con messaggio e stato
+     * 
+     * esempio:
+     * 
+     * <liste>
+            <lista>
+		<idLista>7</idLista>
+		<rifRichiesta>2</rifRichiesta>
+		<rifProdotto>1</rifProdotto>
+		<quantita>5</quantita>
+            </lista>
+        </liste>
      */
     
     @PUT
