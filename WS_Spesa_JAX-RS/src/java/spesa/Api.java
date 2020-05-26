@@ -126,13 +126,15 @@ public class Api extends Application {
      * query.
      *
      * @param username Parametro query che permette di specificare l'username
-     * dei utenti che si vogliono visualizzare
+     * dell'utente che si vuole visualizzare, con esso gli altri filtri non sono
+     * usati
      * @param nome Parametro query che permette di specificare il nome dei
      * utenti che si vogliono visualizzare
      * @param cognome Parametro query che permette di specificare il cognome dei
      * utenti che si vogliono visualizzare
      * @param regione Parametro query che permette di specificare il regione dei
      * utenti che si vogliono visualizzare
+     * @return Risposta, con informazioni richieste o messaggio di errore
      */
     @GET
     @Produces(MediaType.TEXT_XML)
@@ -151,31 +153,35 @@ public class Api extends Application {
         // verifica stato connessione a DBMS
         if (!connected) {
 
-            r = Response.serverError().entity("DBMS Error, impossibile connetresi").build();
+            r = Response.serverError().entity("<messaggio>DBMS Error, impossibile connettersi</messaggio>").build();
             return r;
 
         } else {
 
             try {
-                String sql = "SELECT idUtente, username, nome, cognome, codiceFiscale, regione, via, nCivico FROM utenti WHERE";
 
+                String sql = "";
                 if (username != null) {
-                    sql += " username='" + username + "' AND";
+                    sql = "SELECT idUtente, username, nome, cognome, codiceFiscale, regione, via, nCivico FROM utenti WHERE username='" + username + "';";
+
+                } else {
+                    sql = "SELECT idUtente, username, nome, cognome, codiceFiscale, regione, via, nCivico FROM utenti WHERE";
+
+                    if (nome != null) {
+                        sql += " nome='" + nome + "' AND";
+                    }
+
+                    if (cognome != null) {
+                        sql += " cognome='" + cognome + "' AND";
+                    }
+
+                    if (regione != null) {
+                        sql += " regione='" + regione + "' AND";
+                    }
+
+                    sql = sql + " 1";
                 }
 
-                if (nome != null) {
-                    sql += " nome='" + nome + "' AND";
-                }
-
-                if (cognome != null) {
-                    sql += " cognome='" + cognome + "' AND";
-                }
-
-                if (regione != null) {
-                    sql += " regione='" + regione + "' AND";
-                }
-
-                sql = sql + " 1";
                 // ricerca nominativo nel database
                 Statement statement = spesaDatabase.createStatement();
                 ResultSet result = statement.executeQuery(sql);
@@ -198,22 +204,38 @@ public class Api extends Application {
 
                 if (utentiList.size() > 0) {
                     output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-                    output += "<elencoUtenti>";
+                    output += "<utenti>";
 
                     for (int i = 0; i < utentiList.size(); i++) {
                         Utente u = utentiList.get(i);
                         output += "<utente>";
                         output += "<idUtente>" + u.getIdUtente() + "</idUtente>";
-                        output += "<username>" + u.getUsername() + "</username>";
-                        output += "<nome>" + u.getNome() + "</nome>";
-                        output += "<cognome>" + u.getCognome() + "</cognome>";
+
+                        if (username != null) {
+                            output += "<nome>" + u.getNome() + "</nome>";
+                            output += "<cognome>" + u.getCognome() + "</cognome>";
+                            output += "<regione>" + u.getRegione() + "</regione>";
+
+                        } else {
+                            output += "<username>" + u.getUsername() + "</username>";
+
+                            if (nome == null) {
+                                output += "<nome>" + u.getNome() + "</nome>";
+                            }
+                            if (cognome == null) {
+                                output += "<cognome>" + u.getCognome() + "</cognome>";
+                            }
+                            if (regione == null) {
+                                output += "<regione>" + u.getRegione() + "</regione>";
+                            }
+                        }
+
                         output += "<codiceFiscale>" + u.getCodiceFiscale() + "</codiceFiscale>";
-                        output += "<regione>" + u.getRegione() + "</regione>";
                         output += "<via>" + u.getVia() + "</via>";
                         output += "<nCivico>" + u.getnCivico() + "</nCivico>";
                         output += "</utente>";
                     }
-                    output += "</elencoUtenti>";
+                    output += "</utenti>";
                     utentiList = new ArrayList<Utente>(0);
 
                     destroy();
@@ -222,24 +244,25 @@ public class Api extends Application {
 
                 } else {
                     destroy();
-                    r = Response.status(404).entity("Utente non trovato").build();
+                    r = Response.status(404).entity("<messaggio>Utente non trovato</messaggio>").build();
                     return r;
                 }
+
             } catch (SQLException ex) {
-                Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                r = Response.serverError().build();
+                r = Response.serverError().entity("<messaggio>DBMS SQL Error</messaggio>").build();
                 return r;
             }
         }
     }
 
     /**
-     * Galimberti Francesco PUT spesa/utenti/1
+     * Galimberti Francesco
+     *
+     * PUT spesa/utenti/1
      *
      * body examples
      * <utente>
-     * <idUtente>1</idUtente>
      * <username>fraGali</username>
      * <nome>Francesco</nome>
      * <cognome>Galimberti</cognome>
@@ -254,14 +277,15 @@ public class Api extends Application {
      *
      * @param idUtente identificativo dell'utente da modificare
      * @param content Body della richiesta PUT http/https contenente i nuovi
-     * valori degli attributi dell'utente specificato nel percorso sottoforma di
-     * XML
+     * valori degli attributi dell'utente specificato nel percorso (sottoforma di
+     * XML)
      * @return Risposta, con messaggio e stato
      */
     @PUT
     @Path("utenti/{idUtente}")
     @Consumes({MediaType.TEXT_PLAIN, MediaType.TEXT_XML})
-    public Response putUtente(@PathParam("idUtente") String idUtente,
+    public Response putUtente(
+            @PathParam("idUtente") int idUtente,
             String content) {
         // verifica stato connessione a DBMS
         init();
@@ -269,7 +293,7 @@ public class Api extends Application {
         Response r;
 
         if (!connected) {
-            r = Response.serverError().entity("DBMS Error, impossibile connettersi").build();
+             r = Response.serverError().entity("<messaggio>DBMS Error, impossibile connettersi</messaggio>").build();
             return r;
         } else {
             try {
@@ -283,66 +307,123 @@ public class Api extends Application {
                 myParse = new MyParser();
                 Utente u = myParse.parseFileUtente("utente.xml");
 
-                if (u.getIdUtente() == null || u.getNome() == null || u.getCognome() == null || u.getCognome() == null || u.getCodiceFiscale() == null || u.getRegione() == null || u.getnCivico() == null || u.getVia() == null || u.getUsername() == null) {
-                    r = Response.status(404).entity("Error, Malformed XML Body").build();
-                    return r;
-                }
-                if (u.getIdUtente().isEmpty() || u.getNome().isEmpty() || u.getCognome().isEmpty() || u.getCognome().isEmpty() || u.getCodiceFiscale().isEmpty() || u.getRegione().isEmpty() || u.getnCivico().isEmpty() || u.getVia().isEmpty() || u.getUsername().isEmpty()) {
-                    r = Response.status(404).entity("Error, Malformed XML Body").build();
-                    return r;
-                }
-                if (!u.getIdUtente().equalsIgnoreCase(idUtente)) {
-                    r = Response.status(404).entity("Error, idUtente non congruente").build();
-                    return r;
-                }
+                if (idUtente != 0) {
+                    /*if (u.getNome() == null || u.getCognome() == null || u.getCognome() == null || u.getCodiceFiscale() == null || u.getRegione() == null || u.getnCivico() == null || u.getVia() == null || u.getUsername() == null) {
+                        r = Response.status(409).entity("Error, Malformed XML Body").build();
+                        return r;
+                    }
+                    if (u.getNome().isEmpty() || u.getCognome().isEmpty() || u.getCognome().isEmpty() || u.getCodiceFiscale().isEmpty() || u.getRegione().isEmpty() || u.getnCivico().isEmpty() || u.getVia().isEmpty() || u.getUsername().isEmpty()) {
+                        r = Response.status(409).entity("Error, Malformed XML Body").build();
+                        return r;
+                    }*/
 
-                Statement statement = spesaDatabase.createStatement();
-                String sql = "UPDATE utenti SET username='" + u.getUsername() + "', nome='" + u.getNome() + "', cognome='" + u.getCognome() + "', codiceFiscale='" + u.getCodiceFiscale() + "', regione='" + u.getRegione() + "', via='" + u.getVia() + "', nCivico='" + u.getnCivico() + "' WHERE idUtente = " + u.getIdUtente() + ";";
+                    Statement statement = spesaDatabase.createStatement();
 
-                if (statement.executeUpdate(sql) <= 0) {
-                    statement.close();
-                    r = Response.serverError().entity("DBMS SQL Error, impossibile modificare utenti").build();
+                    StringBuilder columns = new StringBuilder(255);
+                    if (u.getUsername() != null && !u.getUsername().isEmpty()) {
+                        //sql += " username='" + u.getUsername() + "', ";
+                        columns.append("username='").append(u.getUsername()).append("'");
+                    }
+                    if (u.getNome() != null && !u.getNome().isEmpty()) {
+                        //sql += " nome='" + u.getNome() + "', ";
+                        if (columns.length() > 0) {
+                            columns.append(", ");
+                        }
+                        columns.append("nome='").append(u.getNome()).append("'");
+                    }
+                    if (u.getCognome() != null && !u.getCognome().isEmpty()) {
+                        //sql += " cognome='" + u.getCognome() + "', ";
+                        if (columns.length() > 0) {
+                            columns.append(", ");
+                        }
+                        columns.append("cognome='").append(u.getCognome()).append("'");
+                    }
+                    if (u.getCodiceFiscale() != null && !u.getCodiceFiscale().isEmpty()) {
+                        //sql += " codiceFiscale='" + u.getCodiceFiscale() + "', ";
+                        if (columns.length() > 0) {
+                            columns.append(", ");
+                        }
+                        columns.append("codiceFiscale='").append(u.getCodiceFiscale()).append("'");
+                    }
+                    if (u.getRegione() != null && !u.getRegione().isEmpty()) {
+                        //sql += " regione='" + u.getRegione() + "', ";
+                        if (columns.length() > 0) {
+                            columns.append(", ");
+                        }
+                        columns.append("regione='").append(u.getRegione()).append("'");
+                    }
+                    if (u.getVia() != null && !u.getVia().isEmpty()) {
+                        //sql += " via='" + u.getVia() + "', ";
+                        if (columns.length() > 0) {
+                            columns.append(", ");
+                        }
+                        columns.append("via='").append(u.getVia()).append("'");
+                    }
+                    if (u.getnCivico() != null && !u.getnCivico().isEmpty()) {
+                        //sql += " nCivico='" + u.getnCivico() + "', ";
+                        if (columns.length() > 0) {
+                            columns.append(", ");
+                        }
+                        columns.append("nCivico='").append(u.getnCivico()).append("'");
+                    }
+
+                    if (columns.length() > 0) {
+                        String sql = "UPDATE utenti SET " + columns.toString()
+                                + " WHERE idUtente = " + idUtente + ";";
+                        if (statement.executeUpdate(sql) <= 0) {
+                            statement.close();
+                            r = Response.serverError().entity("<messaggio>DBMS SQL Error, impossibile modificare utenti</messaggio>").build();
+                            return r;
+                        }
+                        statement.close();
+                        destroy();
+                        r = Response.ok("<messaggio>Update avvenuto correttamente</messaggio>").build();
+                        return r;
+                    
+                    }else{
+                        r = Response.status(404).entity("<messaggio>parametri non validi</messaggio>").build();
+                        return r;
+                    }
+
+                } else {
+                    r = Response.status(403).entity("<messaggio>idUtente non valido</messaggio>").build();
                     return r;
                 }
-
-                statement.close();
-                destroy();
-                r = Response.ok("Update avvenuto correttamente").build();
-                return r;
 
             } catch (IOException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                r = Response.serverError().entity("DBMS IO Error").build();
+                r = Response.serverError().entity("<messaggio>DBMS IO Error</messaggio>").build();
 
             } catch (SQLException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                r = Response.serverError().entity("DBMS SQL Error").build();
+                r = Response.serverError().entity("<messaggio>DBMS SQL Error</messaggio>").build();
 
             } catch (ParserConfigurationException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                r = Response.status(400).entity("Error, Malformed XML Body").build();
+                r = Response.status(409).entity("<messaggio>Error, Malformed XML Body</messaggio>").build();
 
             } catch (SAXException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                r = Response.serverError().entity("DBMS SAXE Error").build();
+                r = Response.serverError().entity("<messaggio>DBMS SAXE Error</messaggio>").build();
             }
             return r;
         }
     }
 
     /**
-     * Galimberti Francesco DELETE spesa/richieste/1/1
+     * Galimberti Francesco 
+     * DELETE spesa/richieste/1/1
      *
      * Consente di eliminare una richiesta andando a specificarne l'ID tramite
      * il percorso sia della richiesta che dell'utente
      *
      * @param idRichiesta ID della richiesta da eliminare
      * @param idUtente ID dell'utente collegato alla richiesta da eliminare
-     * @return Risposta, con messaggio e stato
+     * @return Risposta, con messaggio 
      */
     @DELETE
     @Path("richieste/{idRichiesta}/{idUtente}")
@@ -353,7 +434,7 @@ public class Api extends Application {
         Response r;
 
         if (!connected) {
-            r = Response.serverError().entity("DBMS Error, impossibile connetresi").build();
+             r = Response.serverError().entity("<messaggio>DBMS Error, impossibile connettersi</messaggio>").build();
             return r;
         } else {
 
@@ -364,22 +445,22 @@ public class Api extends Application {
 
                     if (statement.executeUpdate(sql) <= 0) {
                         statement.close();
-                        r = Response.serverError().entity("DBMS SQL Error, impossibile eliminare richiesta").build();
+                        r = Response.serverError().entity("<messaggio>DBMS SQL Error, impossibile eliminare richiesta</messaggio>").build();
                         return r;
                     }
 
                     statement.close();
                     destroy();
-                    r = Response.ok("Eliminazione avvenuta correttamente").build();
+                    r = Response.ok("<messaggio>Eliminazione avvenuta correttamente</messaggio>").build();
                     return r;
 
                 } catch (SQLException ex) {
                     destroy();
-                    r = Response.serverError().entity("DBMS Error, impossibile eliminare richiesta").build();
+                    r = Response.status(404).entity("<messaggio>Error, idRichiesta o idUtente corretti</messaggio>").build();
                     return r;
                 }
             } else {
-                r = Response.status(404).entity("Error, idRichiesta o idUtente inappropriato").build();
+                r = Response.status(402).entity("<messaggio>Error, idRichiesta o idUtente non validi</messaggio>").build();
                 return r;
             }
         }
@@ -413,7 +494,7 @@ public class Api extends Application {
         Response r;
 
         if (!connected) {
-            r = Response.serverError().entity("DBMS Error, impossibile connetresi").build();
+             r = Response.serverError().entity("<messaggio>DBMS Error, impossibile connettersi</messaggio>").build();
             return r;
         } else {
 
@@ -428,11 +509,11 @@ public class Api extends Application {
                 Risposta rr = myParse.parseFileRisposta("risposta.xml");
 
                 if (rr.getIdUtente() == null || rr.getIdRichiesta() == null) {
-                    r = Response.status(404).entity("Error, Malformed XML Body").build();
+                    r = Response.status(402).entity("<messaggio>Parametri non validi<messaggio>").build();
                     return r;
                 }
                 if (rr.getIdUtente().isEmpty() || rr.getIdRichiesta().isEmpty()) {
-                    r = Response.status(404).entity("Error, Malformed XML Body").build();
+                    r = Response.status(402).entity("<messaggio>Parametri non validi<messaggio>").build();
                     return r;
                 }
 
@@ -442,34 +523,34 @@ public class Api extends Application {
 
                 if (statement.executeUpdate(sql) <= 0) {
                     statement.close();
-                    r = Response.serverError().entity("DBMS SQL Error, impossibile modificare utenti").build();
+                    r = Response.status(404).entity("<messaggio>DBMS SQL Error, impossibile effettuare inserimento</messaggio>").build();
                     return r;
                 }
 
                 statement.close();
                 destroy();
-                r = Response.ok("Inserimento avvenuto correttamente").build();
+                r = Response.ok("<messaggio>Inserimento avvenuto correttamente</messaggio>").build();
                 return r;
 
             } catch (IOException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                r = Response.serverError().entity("DBMS IO Error").build();
+                r = Response.serverError().entity("<messaggio>DBMS IO Error</messaggio>").build();
 
             } catch (SQLException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                r = Response.serverError().entity("DBMS SQL Error").build();
+                r = Response.serverError().entity("<messaggio>DBMS SQL Error</messaggio>").build();
 
             } catch (ParserConfigurationException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                r = Response.status(400).entity("Error, Malformed XML Body").build();
+                r = Response.status(409).entity("<messaggio>Error, Malformed XML Body</messaggio>").build();
 
             } catch (SAXException ex) {
                 Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
                 destroy();
-                r = Response.serverError().entity("DBMS SAXE Error").build();
+                r = Response.serverError().entity("<messaggio>DBMS SAXE Error</messaggio>").build();
             }
             return r;
 
@@ -1125,12 +1206,15 @@ public class Api extends Application {
     }
 
     /**
-    *SPANGARO FRANCESCO
-    *cancella una lista dal database, una lista è l'insieme dei prodotti, assegnata poi ad una richiesta, 
-    *lista che corrisponde all'id inserito come parametro della query, riferimento alla richiesta corrispondente
-    *@param id è l'id su cui si deve basare per fare la ricerca
-    *@return varie tipologie di ritorno, conferma se corretto, altrimenti messaggi di errore corrispondenti
-    */
+     * SPANGARO FRANCESCO cancella una lista dal database, una lista è l'insieme
+     * dei prodotti, assegnata poi ad una richiesta, lista che corrisponde
+     * all'id inserito come parametro della query, riferimento alla richiesta
+     * corrispondente
+     *
+     * @param id è l'id su cui si deve basare per fare la ricerca
+     * @return varie tipologie di ritorno, conferma se corretto, altrimenti
+     * messaggi di errore corrispondenti
+     */
     @DELETE
     @Path("lista")
     public String deleteLista(@QueryParam("id") int rifRichiesta) {
@@ -1325,19 +1409,18 @@ public class Api extends Application {
      * il riferimento alla richiesta, al prodotto e la quantità da comprare
      *
      * @return Risposta, con messaggio e stato
-     * 
+     *
      * esempio:
-     * 
+     *
      * <liste>
-            <lista>
-		<idLista>7</idLista>
-		<rifRichiesta>2</rifRichiesta>
-		<rifProdotto>1</rifProdotto>
-		<quantita>5</quantita>
-            </lista>
-        </liste>
+     * <lista>
+     * <idLista>7</idLista>
+     * <rifRichiesta>2</rifRichiesta>
+     * <rifProdotto>1</rifProdotto>
+     * <quantita>5</quantita>
+     * </lista>
+     * </liste>
      */
-    
     @PUT
     @Consumes(MediaType.TEXT_XML)
     @Path("lista")
