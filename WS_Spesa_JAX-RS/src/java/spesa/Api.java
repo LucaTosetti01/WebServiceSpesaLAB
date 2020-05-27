@@ -24,8 +24,10 @@
  * GALIMBERTI FRANCESCO
  *
  * @GET
+ * http://localhost:8080/spesa/utenti/utente/{username}
+ * http://localhost:8080/spesa/utenti/utente/{idUtente}
  * http://localhost:8080/spesa/utenti
- * http://localhost:8080/spesa/utenti?username={username}&nome={nome}...
+ * http://localhost:8080/spesa/utenti?nome={nome}&...
  * @POST http://localhost:8080/spesa/risposta
  * @PUT http://localhost:8080/spesa/utenti/{idUtente}
  * @DELETE http://localhost:8080/spesa/richieste/{idRichiesta}/{idUtente}
@@ -125,9 +127,6 @@ public class Api extends Application {
      * permettendo di filtrare i risultati ottenuti attraverso vari parametri di
      * query.
      *
-     * @param username Parametro query che permette di specificare l'username
-     * dell'utente che si vuole visualizzare, con esso gli altri filtri non sono
-     * usati
      * @param nome Parametro query che permette di specificare il nome dei
      * utenti che si vogliono visualizzare
      * @param cognome Parametro query che permette di specificare il cognome dei
@@ -139,9 +138,7 @@ public class Api extends Application {
     @GET
     @Produces(MediaType.TEXT_XML)
     @Consumes(MediaType.TEXT_PLAIN)
-    @Path("utenti")
     public Response getUtenti(
-            @QueryParam("username") String username,
             @QueryParam("nome") String nome,
             @QueryParam("cognome") String cognome,
             @QueryParam("regione") String regione) {
@@ -161,26 +158,26 @@ public class Api extends Application {
             try {
 
                 String sql = "";
-                if (username != null) {
+                /*if (username != null) {
                     sql = "SELECT idUtente, username, nome, cognome, codiceFiscale, regione, via, nCivico FROM utenti WHERE username='" + username + "';";
 
-                } else {
-                    sql = "SELECT idUtente, username, nome, cognome, codiceFiscale, regione, via, nCivico FROM utenti WHERE";
+                } else {*/
+                sql = "SELECT idUtente, username, nome, cognome, codiceFiscale, regione, via, nCivico FROM utenti WHERE";
 
-                    if (nome != null) {
-                        sql += " nome='" + nome + "' AND";
-                    }
-
-                    if (cognome != null) {
-                        sql += " cognome='" + cognome + "' AND";
-                    }
-
-                    if (regione != null) {
-                        sql += " regione='" + regione + "' AND";
-                    }
-
-                    sql = sql + " 1";
+                if (nome != null && !nome.isEmpty()) {
+                    sql += " nome='" + nome + "' AND";
                 }
+
+                if (cognome != null && !cognome.isEmpty()) {
+                    sql += " cognome='" + cognome + "' AND";
+                }
+
+                if (regione != null && !regione.isEmpty()) {
+                    sql += " regione='" + regione + "' AND";
+                }
+
+                sql = sql + " 1";
+                //}
 
                 // ricerca nominativo nel database
                 Statement statement = spesaDatabase.createStatement();
@@ -210,24 +207,16 @@ public class Api extends Application {
                         Utente u = utentiList.get(i);
                         output += "<utente>";
                         output += "<idUtente>" + u.getIdUtente() + "</idUtente>";
+                        output += "<username>" + u.getUsername() + "</username>";
 
-                        if (username != null) {
+                        if (nome == null) {
                             output += "<nome>" + u.getNome() + "</nome>";
+                        }
+                        if (cognome == null) {
                             output += "<cognome>" + u.getCognome() + "</cognome>";
+                        }
+                        if (regione == null) {
                             output += "<regione>" + u.getRegione() + "</regione>";
-
-                        } else {
-                            output += "<username>" + u.getUsername() + "</username>";
-
-                            if (nome == null) {
-                                output += "<nome>" + u.getNome() + "</nome>";
-                            }
-                            if (cognome == null) {
-                                output += "<cognome>" + u.getCognome() + "</cognome>";
-                            }
-                            if (regione == null) {
-                                output += "<regione>" + u.getRegione() + "</regione>";
-                            }
                         }
 
                         output += "<codiceFiscale>" + u.getCodiceFiscale() + "</codiceFiscale>";
@@ -244,7 +233,7 @@ public class Api extends Application {
 
                 } else {
                     destroy();
-                    r = Response.status(404).entity("<messaggio>Utente non trovato</messaggio>").build();
+                    r = Response.status(404).entity("<messaggio>Utenti non trovati</messaggio>").build();
                     return r;
                 }
 
@@ -253,6 +242,218 @@ public class Api extends Application {
                 r = Response.serverError().entity("<messaggio>DBMS SQL Error</messaggio>").build();
                 return r;
             }
+        }
+    }
+
+    /**
+     * Galimberti Francesco
+     *
+     * http://localhost:8080/spesa/utenti/utente?id={idUtente}
+     * http://localhost:8080/spesa/utenti/utente?username={username}
+     *
+     * Visualizza i dati relativi agli utenti memorizzati nel database
+     * permettendo di filtrare i risultati ottenuti attraverso vari parametri di
+     * query.
+     *
+     * @param id Parametro query che permette di specificare l'id dell'utente
+     * che si vuole visualizzare
+     * @param username Parametro query che permette di specificare l'username
+     * dell'utente che si vuole visualizzare
+     * @return Risposta, con informazioni richieste o messaggio di errore
+     */
+    /*@GET
+    @Produces(MediaType.TEXT_XML)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Path("utente")
+    public Response getUtente(
+            @QueryParam("id") int id,
+            @QueryParam("username") String username) {
+
+        String output = "";
+        Response r;
+
+        // verifica stato connessione a DBMS
+        if (!connected) {
+
+            r = Response.serverError().entity("<messaggio>DBMS Error, impossibile connettersi</messaggio>").build();
+            return r;
+
+        } else {
+            String sql = "SELECT idUtente, username, nome, cognome, codiceFiscale, regione, via, nCivico FROM utenti WHERE ";
+
+            if (username != null && !username.isEmpty()) {
+                sql += "username='" + username + "';";
+            } else if (id > 0) {
+                sql += "idUtente=" + id + ";";
+            } else {
+                destroy();
+                r = Response.status(402).entity("<messaggio>Parametro non valido o mancante</messaggio>").build();
+                return r;
+            }
+
+            try {
+                Statement statement = spesaDatabase.createStatement();
+                ResultSet result = statement.executeQuery(sql);
+
+                result.next();
+
+                String idUtente = result.getString("idUtente");
+                String Username = result.getString("username");
+                String Nome = result.getString("nome");
+                String Cognome = result.getString("cognome");
+                String CodiceFiscale = result.getString("codiceFiscale");
+                String Regione = result.getString("regione");
+                String Via = result.getString("via");
+                String nCivico = result.getString("nCivico");
+
+                Utente u = new Utente(idUtente, Username, Nome, Cognome, CodiceFiscale, Regione, Via, nCivico);
+
+                result.close();
+                statement.close();
+
+                output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+                output += "<utente>";
+
+                if (username != null) {
+                    output += "<idUtente>" + u.getIdUtente() + "</idUtente>";
+                } else if (id != 0) {
+                    output += "<username>" + u.getUsername() + "</username>";
+                }
+
+                output += "<nome>" + u.getNome() + "</nome>";
+                output += "<cognome>" + u.getCognome() + "</cognome>";
+                output += "<regione>" + u.getRegione() + "</regione>";
+                output += "<codiceFiscale>" + u.getCodiceFiscale() + "</codiceFiscale>";
+                output += "<via>" + u.getVia() + "</via>";
+                output += "<nCivico>" + u.getnCivico() + "</nCivico>";
+                output += "</utente>";
+
+                destroy();
+                r = Response.ok(output).build();
+                return r;
+
+            } catch (SQLException ex) {
+                Logger.getLogger(Utenti.class.getName()).log(Level.SEVERE, null, ex);
+                destroy();
+                r = Response.status(404).entity("<messaggio>Utente non trovato</messaggio>").build();
+                return r;
+            }
+
+        }
+    }*/
+    /**
+     * Verifica se una stringa è un numero int
+     *
+     * @return il numero se è un int, -1 se è una stringa
+     */
+    public static int isInt(String num) {
+        try {
+            int i = Integer.parseInt(num);
+            return i;
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    /**
+     * Galimberti Francesco
+     *
+     * http://localhost:8080/spesa/utenti/utente/{username}
+     * http://localhost:8080/spesa/utenti/utente/{idUtente}
+     *
+     * Visualizza i dati relativi all'utente memorizzato nel database passando
+     * come parametro l'username o l'id dell'utente
+     *
+     * @param path contiene o l'username o l'id dell'utente ricercato
+     * @return Risposta, con informazioni richieste o messaggio di errore
+     */
+    @GET
+    @Produces(MediaType.TEXT_XML)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Path("utente/{path}")
+    public Response getUtente(
+            @PathParam("path") String path) {
+
+        String output = "";
+        int id;
+        Response r;
+
+        // verifica stato connessione a DBMS
+        if (!connected) {
+
+            r = Response.serverError().entity("<messaggio>DBMS Error, impossibile connettersi</messaggio>").build();
+            return r;
+
+        } else {
+            String sql = "SELECT idUtente, username, nome, cognome, codiceFiscale, regione, via, nCivico FROM utenti WHERE ";
+
+            if (path != null && !path.isEmpty()) {
+
+                id = isInt(path);
+                if (id > 0) {
+                    sql += "idUtente=" + id + ";";
+                } else if (id == 0) {
+                    destroy();
+                    r = Response.status(402).entity("<messaggio>Parametro non valido o mancante</messaggio>").build();
+                    return r;
+                } else {
+                    sql += "username='" + path + "';";
+                }
+
+            } else {
+                destroy();
+                r = Response.status(402).entity("<messaggio>Parametro non valido o mancante</messaggio>").build();
+                return r;
+            }
+
+            try {
+                Statement statement = spesaDatabase.createStatement();
+                ResultSet result = statement.executeQuery(sql);
+
+                result.next();
+
+                String idUtente = result.getString("idUtente");
+                String Username = result.getString("username");
+                String Nome = result.getString("nome");
+                String Cognome = result.getString("cognome");
+                String CodiceFiscale = result.getString("codiceFiscale");
+                String Regione = result.getString("regione");
+                String Via = result.getString("via");
+                String nCivico = result.getString("nCivico");
+
+                Utente u = new Utente(idUtente, Username, Nome, Cognome, CodiceFiscale, Regione, Via, nCivico);
+
+                result.close();
+                statement.close();
+
+                output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+                output += "<utente>";
+
+                if (id > 0) {
+                    output += "<username>" + u.getUsername() + "</username>";
+                } else {
+                    output += "<idUtente>" + u.getIdUtente() + "</idUtente>";
+                }
+
+                output += "<nome>" + u.getNome() + "</nome>";
+                output += "<cognome>" + u.getCognome() + "</cognome>";
+                output += "<regione>" + u.getRegione() + "</regione>";
+                output += "<codiceFiscale>" + u.getCodiceFiscale() + "</codiceFiscale>";
+                output += "<via>" + u.getVia() + "</via>";
+                output += "<nCivico>" + u.getnCivico() + "</nCivico>";
+                output += "</utente>";
+
+                destroy();
+                r = Response.ok(output).build();
+                return r;
+
+            } catch (SQLException ex) {
+                Logger.getLogger(Api.class.getName()).log(Level.SEVERE, null, ex);
+                destroy();
+                r = Response.status(404).entity("<messaggio>Utente non trovato</messaggio>").build();
+                return r;
+            }
+
         }
     }
 
