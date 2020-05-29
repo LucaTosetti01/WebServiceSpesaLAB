@@ -12,6 +12,8 @@ import java.sql.Time;
  * @author franc_000
  */
 public class Richiesta {
+
+    private int idRichiesta;
     private int rifUtente;
     private String oraInizio, oraFine, durata;
 
@@ -22,7 +24,23 @@ public class Richiesta {
         this.durata = durata;
     }
 
+    public Richiesta(int idRichiesta, int rifUtente, String oraInizio, String oraFine, String durata) {
+        this.idRichiesta = idRichiesta;
+        this.rifUtente = rifUtente;
+        this.oraInizio = oraInizio;
+        this.oraFine = oraFine;
+        this.durata = durata;
+    }
+
     public Richiesta() {
+    }
+
+    public int getIdRichiesta() {
+        return idRichiesta;
+    }
+
+    public void setIdRichiesta(int idRichiesta) {
+        this.idRichiesta = idRichiesta;
     }
 
     public int getRifUtente() {
@@ -56,7 +74,5 @@ public class Richiesta {
     public void setDurata(String durata) {
         this.durata = durata;
     }
-    
-    
-    
+
 }

@@ -764,15 +764,21 @@ public class Api extends Application {
      * Visualizza i dati relativi alle richieste memorizzate nel database oppure
      * di uno specifico utente andando a specificare l'id di tale utente come
      * parametro query
-     * @param id ID dell'utente del quale si vogliono ottenere le varie
-     * richieste
-     * @return Output XML contenente le informazioni relative a una o più
-     * richieste / Output messaggio di errore
+     * <br><br>
+     * Esempi:  http://localhost:8080/spesa/risposte?rifUtente=1&rifRichiesta=4&lista=true
+     *          http://localhost:8080/spesa/risposte?rifUtente=1&rifRichiesta=2
+     *          http://localhost:8080/spesa/risposte?rifUtente=3
+     *          http://localhost:8080/spesa/risposte?rifUtente=1
+     * 
+     * @param rifUtente ID dell'utente del quale si vogliono ottenere le varie risposte
+     * @param rifRichiesta ID di una richiesta specifica soddisfatta dall'utente
+     * @param lista Booleano che permette di visualizzare o meno la o le liste relative alla o alle richieste soddisfatte (Di default è false, quindi la lista non verrà visualizzata)
+     * @return Output XML contenente le informazioni relative a una o più risposte / Output messaggio di errore
      */
     @GET
     @Produces(MediaType.TEXT_XML)
     @Path("risposte")
-    public String getRisposte(@QueryParam("idUtente") String id) {
+    public String getRisposte(@QueryParam("rifUtente") String rifUtente, @QueryParam("rifRichiesta") String rifRichiesta, @QueryParam("lista") boolean lista) {
         init();
         String output = "";
         if (!connected) {
@@ -780,52 +786,148 @@ public class Api extends Application {
         }
 
         try {
-            String sql = "SELECT idRisposta,rifRichiesta,rifUtente FROM risposte WHERE";
-            if (id != null && !id.isEmpty()) {
-                sql = sql + " rifUtente='" + id + "' AND";
-            }
+            String sql;
+            ArrayList<Object> risp = new ArrayList<Object>();
+            if (rifUtente != null && !rifUtente.isEmpty()) {
+                sql = "SELECT idRichiesta,richieste.rifUtente,oraInizioConsegna,oraFineConsegna,durataRichiesta FROM Richieste,risposte WHERE idRichiesta=risposte.rifRichiesta AND risposte.rifUtente='" + rifUtente + "'";
+                if(rifRichiesta != null && !rifRichiesta.isEmpty()) {
+                    sql = "SELECT idRichiesta,richieste.rifUtente,oraInizioConsegna,oraFineConsegna,durataRichiesta FROM Richieste,risposte WHERE idRichiesta=risposte.rifRichiesta AND risposte.rifUtente='" + rifUtente + "' AND risposte.rifRichiesta='"+rifRichiesta+"'";
+                }
+                
+                Statement statement = spesaDatabase.createStatement();
+                ResultSet result = statement.executeQuery(sql);
 
-            sql = sql + " 1";
-            Statement statement = spesaDatabase.createStatement();
-            ResultSet result = statement.executeQuery(sql);
+                String rispOraInizioConsegna, rispOraFineConsegna, rispDurataRichiesta;
+                int rispIdRichiesta = 0, rispRifUtente = 0;
+                ArrayList<Object> richieste = new ArrayList<Object>();
+                ArrayList<Object> liste = new ArrayList<Object>();
+                while (result.next()) {
+                    rispIdRichiesta = result.getInt(1);
+                    rispRifUtente = result.getInt(2);
+                    rispOraInizioConsegna = result.getString(3);
+                    rispOraFineConsegna = result.getString(4);
+                    rispDurataRichiesta = result.getString(5);
 
-            ArrayList<Risposta> risp = new ArrayList<Risposta>();
-            while (result.next()) {
-                String rispID = result.getString(1);
-                String rispRifRichiesta = result.getString(2);
-                String rispRifUtente = result.getString(3);
-                risp.add(new Risposta(rispRifUtente, rispRifRichiesta, rispID));
+                    Richiesta richiesta = new Richiesta(rispIdRichiesta, rispRifUtente, rispOraInizioConsegna, rispOraFineConsegna, rispDurataRichiesta);
+                    richieste.add(richiesta);
 
-            }
+                    sql = "SELECT idProdotto,genere,etichetta,costo,nome,marca,descrizione,quantita FROM prodotti,liste,richieste WHERE liste.rifRichiesta=richieste.idRichiesta AND rifProdotto=idProdotto AND liste.rifRichiesta='" + rispIdRichiesta + "'";
 
-            if (risp.size() > 0) {
+                    //result.close();
+                    //statement.close();
+
+                    Statement statement2 = spesaDatabase.createStatement();
+                    ResultSet result2 = statement2.executeQuery(sql);
+
+                    int idProdotto;
+                    String rispGenere, rispEtichetta, rispNomeProdotto, rispMarca, rispDescrizione;
+                    double rispCosto;
+
+                    ArrayList<Object> listaProdotti = new ArrayList<Object>();
+                    while (result2.next()) {
+                        idProdotto = result2.getInt(1);
+                        rispGenere = result2.getString(2);
+                        rispEtichetta = result2.getString(3);
+                        rispCosto = result2.getDouble(4);
+                        rispNomeProdotto = result2.getString(5);
+                        rispMarca = result2.getString(6);
+                        rispDescrizione = result2.getString(7);
+
+                        Prodotto prodotto = new Prodotto(idProdotto, rispGenere, rispEtichetta, rispCosto, rispNomeProdotto, rispMarca, rispDescrizione);
+                        listaProdotti.add(prodotto);
+                    }
+                    liste.add(listaProdotti);
+                    
+                    result2.close();
+                    statement2.close();
+                }
+                risp.add(richieste);
+                risp.add(liste);
+
+                sql = "SELECT idUtente,username,nome,cognome,codiceFiscale,regione,via,nCivico FROM utenti,richieste WHERE rifUtente='" + rispRifUtente + "' AND richieste.rifUtente=utenti.idUtente GROUP BY idUtente";
+
+                statement = spesaDatabase.createStatement();
+                result = statement.executeQuery(sql);
+
+                String rispIdUtente, rispUsername, rispNome, rispCognome, rispCodiceFiscale, rispRegione, rispVia, rispNCivico;
+                while (result.next()) {
+                    rispIdUtente = result.getString(1);
+                    rispUsername = result.getString(2);
+                    rispNome = result.getString(3);
+                    rispCognome = result.getString(4);
+                    rispCodiceFiscale = result.getString(5);
+                    rispRegione = result.getString(6);
+                    rispVia = result.getString(7);
+                    rispNCivico = result.getString(8);
+
+                    Utente utente = new Utente(rispIdUtente, rispUsername, rispNome, rispCognome, rispCodiceFiscale, rispRegione, rispVia, rispNCivico);
+                    risp.add(utente);
+
+                }
+
                 result.close();
                 statement.close();
-
+            }
+            
+            
+            if (risp.size() > 0) {
                 output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
                 output = output + "<elencoRisposte>\n";
 
-                for (int i = 0; i < risp.size(); i++) {
+                Utente utente=new Utente();
+                ArrayList<Richiesta> richieste=new ArrayList<Richiesta>();
+                ArrayList<Prodotto> listaProdotti=new ArrayList<Prodotto>();
+                utente=(Utente) risp.get(2);
+                richieste=(ArrayList<Richiesta>) risp.get(0);
+                for (int i = 0; i < richieste.size(); i++) {
+                    listaProdotti=(ArrayList<Prodotto>)(((ArrayList<Object>) risp.get(1)).get(i));
                     output = output + "<risposta>\n";
-                    output = output + "<rifUtente>" + risp.get(i).getIdUtente() + "</rifUtente>\n";
-                    output = output + "<idRisposta>" + risp.get(i).getIdRisposta() + "</idRisposta>\n";
-                    output = output + "<rifRichiesta>" + risp.get(i).getIdRichiesta() + "</rifRichiesta>\n";
+                    output = output + "<idRichiesta>" + richieste.get(i).getIdRichiesta() + "</idRichiesta>\n";
+                    output = output + "<rifUtente>\n";
+                    output = output + "<username>" + utente.getUsername() + "</username>\n";
+                    output = output + "<nome>" + utente.getNome() + "</nome>\n";
+                    output = output + "<cognome>" + utente.getCognome() + "</cognome>\n";
+                    output = output + "<codiceFiscale>" + utente.getCodiceFiscale() + "</codiceFiscale>\n";
+                    output = output + "<regione>" + utente.getRegione() + "</regione>\n";
+                    output = output + "<via>" + utente.getVia() + "</via>\n";
+                    output = output + "<nCivico>" + utente.getnCivico() + "</nCivico>\n";
+                    output = output + "</rifUtente>\n";
+                    output = output + "<oraInizio>" + richieste.get(i).getOraInizio() + "</oraInizio>\n";
+                    output = output + "<oraFine>" + richieste.get(i).getOraFine() + "</oraFine>\n";
+                    output = output + "<durata>" + richieste.get(i).getDurata() + "</durata>\n";
+                    
+                    if(lista) {
+                    output = output + "<lista>\n";
+                    for(int y=0;y<listaProdotti.size();y++) {
+                        output = output + "<prodotto>\n";
+                        output = output + "<idProdotto>" + listaProdotti.get(y).getIdProdotto() + "</idProdotto>\n";
+                        output = output + "<genere>" + listaProdotti.get(y).getGenere() + "</genere>\n";
+                        output = output + "<etichetta>" + listaProdotti.get(y).getEtichetta() + "</etichetta>\n";
+                        output = output + "<costo>" + listaProdotti.get(y).getCosto() + "</costo>\n";
+                        output = output + "<nome>" + listaProdotti.get(y).getNome()+ "</nome>\n";
+                        output = output + "<marca>" + listaProdotti.get(y).getMarca()+ "</marca>\n";
+                        output = output + "<descrizione>" + listaProdotti.get(y).getDescrizione()+ "</descrizione>\n";
+                        output = output + "</prodotto>\n";
+                    }
+                    output = output + "</lista>\n";
+                    }
                     output = output + "</risposta>\n";
                 }
 
                 output = output + "</elencoRisposte>\n";
+            
             } else {
-                result.close();
-                statement.close();
                 destroy();
                 return output;
             }
+            
         } catch (SQLException ex) {
             destroy();
             return "<errorMessage>500</errorMessage>";
         }
         destroy();
         return output;
+
     }
 
     /**
